@@ -1,8 +1,9 @@
 import { Link } from "react-router-dom"
-import { Menu } from "lucide-react"
+import { Menu, ChevronDown, ChevronUp } from "lucide-react"
 import {
     LayoutDashboard, Monitor, Users, CreditCard, Ticket, Package,
-    Database, LifeBuoy, Settings, Mail, Puzzle, BookOpen
+    Database, LifeBuoy, Settings, Mail, Puzzle, BookOpen, ShoppingCart, TrendingUp, Handshake,
+    Wallet, Scale, UserRound, FileText, Factory, SlidersHorizontal
 } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { useState } from "react"
@@ -10,29 +11,130 @@ import logo from "@/assets/logo.png"
 
 const menuItems = [
     { name: "Dashboard", icon: LayoutDashboard, path: "/" },
-    // { name: "Frontend", icon: Monitor, path: "/frontend" },
-    {
-        name: "Client", icon: Users, path: "/client"
-    },
-    { name: "Payments", icon: CreditCard, path: "/payments" },
-    { name: "Coupon List", icon: Ticket, path: "/coupons" },
-    { name: "Theme", icon: Database, path: "/theme" },
-    {
-        name: "Package", icon: Package, children: [
-            { name: "List", path: "/package/list" },
-            { name: "Add", path: "/package/add" }
-        ]
-    },
-    { name: "Support Tickets", icon: LifeBuoy, path: "/support" },
-        {
-        name: "POS", icon: Users, path: "/point-of-sale"
-    },
-
-]
+    { name: "Product", icon: Package, children: [
+        { name: "Category", path: "/product/category" },
+        { name: "List", path: "/product" },
+        { name: "Add", path: "/product/add" }
+    ]},
+    { name: "Purchase", icon: ShoppingCart, children: [
+        { name: "List", path: "/purchase/list" },
+        { name: "Add", path: "/purchase/add" }
+    ]},
+    { name: "Sale", icon: TrendingUp, children: [
+        { name: "List", path: "/sale/list" },
+        { name: "Add", path: "/sale/add" }
+    ]},
+    { name: "Expense", icon: Wallet, children: [
+        { name: "List", path: "/expense/list" },
+        { name: "Add", path: "/expense/add" }
+    ]},
+    { name: "Income", icon: Handshake, children: [
+        { name: "List", path: "/income/list" },
+        { name: "Add", path: "/income/add" }
+    ]},
+    { name: "Quotation", icon: FileText, children: [
+        { name: "List", path: "/quotation/list" },
+        { name: "Add", path: "/quotation/add" }
+    ]},
+    { name: "Transfer", icon: Puzzle, path: "/transfer" },
+    { name: "Return", icon: Scale, path: "/return" },
+    { name: "Accounting", icon: BookOpen, children: [
+        { name: "List", path: "/accounting/list" },
+        { name: "Add", path: "/accounting/add" }
+    ]},
+    { name: "HRM", icon: UserRound, children: [
+        { name: "List", path: "/hrm/list" },
+        { name: "Add", path: "/hrm/add" }
+    ]},
+    { name: "People", icon: Users, children: [
+        { name: "List", path: "/people/list" },
+        { name: "Add", path: "/people/add" }
+    ]},
+    { name: "Reports", icon: FileText, children: [
+        { name: "List", path: "/reports/list" },
+        { name: "Add", path: "/reports/add" }
+    ]},
+    { name: "Addons", icon: Puzzle, path: "/addons" },
+    { name: "Manufacturing", icon: Factory, children: [
+        { name: "List", path: "/manufacturing/list" },
+        { name: "Add", path: "/manufacturing/add" }
+    ]},
+    { name: "Settings", icon: SlidersHorizontal, children: [
+        { name: "List", path: "/settings/list" },
+        { name: "Add", path: "/settings/add" }
+    ]},
+];
 
 export default function Sidebar() {
-    const [mobileOpen, setMobileOpen] = useState(false)
-    const [desktopCollapsed, setDesktopCollapsed] = useState(false)
+    const [mobileOpen, setMobileOpen] = useState(false);
+    const [desktopCollapsed, setDesktopCollapsed] = useState(false);
+    const [openDropdown, setOpenDropdown] = useState(null);
+
+    const toggleDropdown = (name) => {
+        setOpenDropdown(openDropdown === name ? null : name);
+    };
+
+    const renderMenuItems = (items) => {
+        return items.map((item, index) => {
+            if (item.children) {
+                return (
+                    <li key={index}>
+                        <div
+                            onClick={() => toggleDropdown(item.name)}
+                            className="flex items-center justify-between p-3 mx-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                        >
+                            <div className="flex items-center gap-3">
+                                <item.icon className="w-5 h-5 flex-shrink-0" />
+                                {!desktopCollapsed && (
+                                    <span className="truncate">{item.name}</span>
+                                )}
+                            </div>
+                            {!desktopCollapsed && (
+                                openDropdown === item.name ? (
+                                    <ChevronUp className="w-4 h-4" />
+                                ) : (
+                                    <ChevronDown className="w-4 h-4" />
+                                )
+                            )}
+                        </div>
+                        {!desktopCollapsed && openDropdown === item.name && (
+                            <ul className="pl-8">
+                                {item.children.map((child, childIndex) => (
+                                    <li key={childIndex}>
+                                        <Link
+                                            to={child.path}
+                                            className="flex items-center p-2 rounded-lg hover:bg-gray-100 transition-colors text-sm"
+                                            onClick={() => setMobileOpen(false)}
+                                        >
+                                            {child.name}
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </li>
+                );
+            } else {
+                return (
+                    <li key={index}>
+                        <Link
+                            to={item.path}
+                            className={`flex items-center gap-3 p-3 mx-2 rounded-lg hover:bg-gray-100 transition-colors ${
+                                desktopCollapsed ? 'justify-center' : ''
+                            }`}
+                            title={desktopCollapsed ? item.name : ''}
+                            onClick={() => setMobileOpen(false)}
+                        >
+                            <item.icon className="w-5 h-5 flex-shrink-0" />
+                            {!desktopCollapsed && (
+                                <span className="truncate">{item.name}</span>
+                            )}
+                        </Link>
+                    </li>
+                );
+            }
+        });
+    };
 
     return (
         <>
@@ -48,18 +150,7 @@ export default function Sidebar() {
                         <nav className="h-full bg-white border-r">
                             <img src={logo} alt="logo" className="p-10" />
                             <ul>
-                                {menuItems.map((item, index) => (
-                                    <li key={index}>
-                                        <Link
-                                            to={item.path}
-                                            className="flex items-center gap-2 p-3 hover:bg-gray-100"
-                                            onClick={() => setMobileOpen(false)}
-                                        >
-                                            <item.icon className="w-5 h-5" />
-                                            {item.name}
-                                        </Link>
-                                    </li>
-                                ))}
+                                {renderMenuItems(menuItems)}
                             </ul>
                         </nav>
                     </SheetContent>
@@ -70,10 +161,8 @@ export default function Sidebar() {
             <aside className={`hidden md:block h-screen bg-white border-r transition-all duration-300 ${
                 desktopCollapsed ? 'w-16' : 'w-64'
             }`}>
-                {/* Header with toggle functionality */}
                 <div className={`flex items-center p-6 border-b ${desktopCollapsed ? 'justify-center' : 'justify-start'}`}>
                     {desktopCollapsed ? (
-                        // Show only Menu button when collapsed
                         <button
                             onClick={() => setDesktopCollapsed(!desktopCollapsed)}
                             className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
@@ -81,7 +170,6 @@ export default function Sidebar() {
                             <Menu className="w-5 h-5" />
                         </button>
                     ) : (
-                        // Show only Logo when expanded
                         <img 
                             src={logo} 
                             alt="logo" 
@@ -90,25 +178,8 @@ export default function Sidebar() {
                         />
                     )}
                 </div>
-
-                {/* Menu items */}
                 <ul className="pt-4">
-                    {menuItems.map((item, index) => (
-                        <li key={index}>
-                            <Link
-                                to={item.path}
-                                className={`flex items-center gap-3 p-3 mx-2 rounded-lg hover:bg-gray-100 transition-colors ${
-                                    desktopCollapsed ? 'justify-center' : ''
-                                }`}
-                                title={desktopCollapsed ? item.name : ''}
-                            >
-                                <item.icon className="w-5 h-5 flex-shrink-0" />
-                                {!desktopCollapsed && (
-                                    <span className="truncate">{item.name}</span>
-                                )}
-                            </Link>
-                        </li>
-                    ))}
+                    {renderMenuItems(menuItems)}
                 </ul>
             </aside>
         </>

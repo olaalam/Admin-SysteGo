@@ -2,7 +2,7 @@ import { useState } from "react";
 import DataTable from "@/components/DataTable";
 import DeleteDialog from "@/components/DeleteForm";
 
-const Client = () => {
+const Product = () => {
   const [data, setData] = useState([
     {
       id: 1,
@@ -65,11 +65,11 @@ const Client = () => {
   ];
 
   const handleAdd = () => {
-    alert("Add new client clicked!");
+    alert("Add new product clicked!");
   };
 
   const handleEdit = (item) => {
-    alert(`Edit client: ${item.name}`);
+    alert(`Edit product: ${item.name}`);
   };
 
   const handleDelete = (item) => {
@@ -81,11 +81,11 @@ const Client = () => {
       <DataTable
         data={data}
         columns={columns}
-        title="Client Management"
+        title="product Management"
         onAdd={handleAdd}
         onEdit={handleEdit}
         onDelete={(item) => setDeleteTarget(item)} // 👈 افتح الـ dialog
-        addButtonText="Add Client"
+        addButtonText="Add product"
         addPath={"add"}
         editPath={"edit/:id"}
         itemsPerPage={10}
@@ -111,4 +111,4 @@ const Client = () => {
   );
 };
 
-export default Client;
+export default Product;

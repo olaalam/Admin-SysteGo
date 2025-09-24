@@ -28,17 +28,14 @@ export default function DataTable({
     const [selectedFilters, setSelectedFilters] = useState({});
     const [itemsPerPageState, setItemsPerPageState] = useState(itemsPerPage);
     const navigate = useNavigate();
-    const [deleteTarget, setDeleteTarget] = useState(null);
     // Get unique values for filterable columns
     const getFilterOptions = (columnKey) => {
         const values = data.map((item) => item[columnKey]).filter(Boolean);
         return [...new Set(values)];
     };
-
     // Filter and search data
     const filteredData = useMemo(() => {
         let filtered = data;
-
         // Apply search
         if (searchTerm) {
             filtered = filtered.filter((item) =>
@@ -47,23 +44,25 @@ export default function DataTable({
                 )
             );
         }
-
         // Apply filters
         Object.entries(selectedFilters).forEach(([key, value]) => {
             if (value) {
-                filtered = filtered.filter((item) => item[key] === value);
+                // Handle date filtering
+                const column = columns.find(col => col.key === key);
+                if (column?.filterType === 'date') {
+                    filtered = filtered.filter((item) => item[key] === value);
+                } else {
+                    filtered = filtered.filter((item) => item[key] === value);
+                }
             }
         });
-
         return filtered;
-    }, [data, searchTerm, selectedFilters]);
-
+    }, [data, searchTerm, selectedFilters, columns]);
     // Pagination
     const totalPages = Math.ceil(filteredData.length / itemsPerPageState);
     const startIndex = (currentPage - 1) * itemsPerPageState;
     const endIndex = startIndex + itemsPerPageState;
     const currentData = filteredData.slice(startIndex, endIndex);
-
     // Handle filter change
     const handleFilterChange = (columnKey, value) => {
         setSelectedFilters((prev) => ({
@@ -72,14 +71,12 @@ export default function DataTable({
         }));
         setCurrentPage(1);
     };
-
     // Reset filters
     const resetFilters = () => {
         setSelectedFilters({});
         setSearchTerm("");
         setCurrentPage(1);
     };
-
     return (
         <div className={`bg-white rounded-lg shadow-lg ${className}`}>
             {/* Header */}
@@ -94,16 +91,14 @@ export default function DataTable({
                                     onAdd();
                                 }
                             }}
-                            className="bg-primary  hover:bg-teal-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                            className="bg-teal-500 hover:bg-teal-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
                         >
                             <Plus size={20} />
                             {addButtonText}
                         </button>
                     )}
-                    <h2 className="text-2xl font-meduim pt-4 text-gray-800">{title}</h2>
-
+                    <h2 className="text-2xl font-medium pt-4 text-gray-800">{title}</h2>
                 </div>
-
                 {/* Search and Filters */}
                 <div className="flex flex-wrap gap-4 items-center">
                     {searchable && (
@@ -124,29 +119,39 @@ export default function DataTable({
                             />
                         </div>
                     )}
-
                     {/* Filter Dropdowns */}
                     {filterable &&
                         columns
                             .filter((col) => col.filterable)
                             .map((column) => (
-                                <select
-                                    key={column.key}
-                                    value={selectedFilters[column.key] || ""}
-                                    onChange={(e) =>
-                                        handleFilterChange(column.key, e.target.value)
-                                    }
-                                    className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                                >
-                                    <option value="">All {column.header}</option>
-                                    {getFilterOptions(column.key).map((option) => (
-                                        <option key={option} value={option}>
-                                            {option}
-                                        </option>
-                                    ))}
-                                </select>
+                                <div key={column.key}>
+                                    {column.filterType === 'date' ? (
+                                        <input
+                                            type="date"
+                                            value={selectedFilters[column.key] || ''}
+                                            onChange={(e) =>
+                                                handleFilterChange(column.key, e.target.value)
+                                            }
+                                            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                                        />
+                                    ) : (
+                                        <select
+                                            value={selectedFilters[column.key] || ""}
+                                            onChange={(e) =>
+                                                handleFilterChange(column.key, e.target.value)
+                                            }
+                                            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                                        >
+                                            <option value="">All {column.header}</option>
+                                            {getFilterOptions(column.key).map((option) => (
+                                                <option key={option} value={option}>
+                                                    {option}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    )}
+                                </div>
                             ))}
-
                     {/* Items per page */}
                     <select
                         value={itemsPerPageState}
@@ -161,7 +166,6 @@ export default function DataTable({
                         <option value={20}>20 per page</option>
                         <option value={50}>50 per page</option>
                     </select>
-
                     {/* Reset filters button */}
                     {(searchTerm || Object.values(selectedFilters).some((v) => v)) && (
                         <button
@@ -173,7 +177,6 @@ export default function DataTable({
                     )}
                 </div>
             </div>
-
             {/* Table */}
             <div className="overflow-x-auto">
                 <table className="w-full">
@@ -217,7 +220,7 @@ export default function DataTable({
                                                             if (editPath) {
                                                                 navigate(editPath);
                                                             } else if (onEdit) {
-                                                                onEdit();
+                                                                onEdit(item);
                                                             }
                                                         }}
                                                         className="text-primary hover:text-teal-700 p-1 rounded transition-colors"
@@ -235,7 +238,6 @@ export default function DataTable({
                                                         <Trash2 size={16} />
                                                     </button>
                                                 )}
-
                                             </div>
                                         </td>
                                     )}
@@ -256,7 +258,6 @@ export default function DataTable({
                     </tbody>
                 </table>
             </div>
-
             {/* Pagination */}
             {totalPages > 1 && (
                 <div className="px-6 py-4 border-t border-gray-200">
@@ -274,20 +275,9 @@ export default function DataTable({
                             >
                                 <ChevronLeft size={16} />
                             </button>
-
                             {/* Page numbers */}
-                            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                                let pageNum;
-                                if (totalPages <= 5) {
-                                    pageNum = i + 1;
-                                } else if (currentPage <= 3) {
-                                    pageNum = i + 1;
-                                } else if (currentPage >= totalPages - 2) {
-                                    pageNum = totalPages - 4 + i;
-                                } else {
-                                    pageNum = currentPage - 2 + i;
-                                }
-
+                            {Array.from({ length: totalPages }, (_, i) => {
+                                const pageNum = i + 1;
                                 return (
                                     <button
                                         key={pageNum}
@@ -301,7 +291,6 @@ export default function DataTable({
                                     </button>
                                 );
                             })}
-
                             <button
                                 onClick={() =>
                                     setCurrentPage((prev) => Math.min(prev + 1, totalPages))
