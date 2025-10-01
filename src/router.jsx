@@ -4,6 +4,18 @@ import Dashboard from "@/Pages/Dashboard";
 import LoginPage from "@/components/Login";
 import NotFoundPage from "@/Pages/NotFound";
 import ProtectedRoute from "@/components/ProtectedRoute"; // ✅
+import Brand from "./Pages/Brand/Brand";
+import BrandAdd from "./Pages/Brand/BrandAdd";
+import BrandEdit from "./Pages/Brand/BrandEdit";
+import Category from "./Pages/Category/Category";
+import CategoryAdd from "./Pages/Category/CategoryAdd";
+import CategoryEdit from "./Pages/Category/CategoryEdit";
+import Product from "./Pages/Product/Product";
+import ProductAdd from "./Pages/Product/ProductAdd";
+import ProductEdit from "./Pages/Product/ProductEdit";
+import Attribute from "./Pages/Attribute/Attribute";
+import AttributeAdd from "./Pages/Attribute/AttributeAdd";
+import AttributeEdit from "./Pages/Attribute/AttributeEdit";
 export default function AppRoutes() {
   return (
     <Routes>
@@ -19,13 +31,13 @@ export default function AppRoutes() {
           </ProtectedRoute>
         }
       />
-      {/* ✅ Theme (Nested Routes محمية)
-      <Route path="theme">
+      {/* ✅ Product (Nested Routes محمية) */}
+      <Route path="product">
         <Route
           index
           element={
             <ProtectedRoute>
-              <Theme />
+              <Product />
             </ProtectedRoute>
           }
         />
@@ -33,7 +45,7 @@ export default function AppRoutes() {
           path="add"
           element={
             <ProtectedRoute>
-              <ThemeAdd />
+              <ProductAdd />
             </ProtectedRoute>
           }
         />
@@ -41,12 +53,92 @@ export default function AppRoutes() {
           path="edit/:id"
           element={
             <ProtectedRoute>
-              <ThemeEdit />
+              <ProductEdit />
             </ProtectedRoute>
           }
         />
-      </Route> */}
-
+      </Route>
+      {/* ✅ Brand (Nested Routes محمية) */}
+      <Route path="brand">
+        <Route
+          index
+          element={
+            <ProtectedRoute>
+              <Brand />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="add"
+          element={
+            <ProtectedRoute>
+              <BrandAdd />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="edit/:id"
+          element={
+            <ProtectedRoute>
+              <BrandEdit />
+            </ProtectedRoute>
+          }
+        />
+      </Route>
+      {/* ✅ Category (Nested Routes محمية) */}
+      <Route path="category">
+        <Route
+          index
+          element={
+            <ProtectedRoute>
+              <Category />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="add"
+          element={
+            <ProtectedRoute>
+              <CategoryAdd />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="edit/:id"
+          element={
+            <ProtectedRoute>
+              <CategoryEdit />
+            </ProtectedRoute>
+          }
+        />
+      </Route>
+      {/* ✅ Attribute (Nested Routes محمية) */}
+      <Route path="attribute">
+        <Route
+          index
+          element={
+            <ProtectedRoute>
+              <Attribute />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="add"
+          element={
+            <ProtectedRoute>
+              <AttributeAdd />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="edit/:id"
+          element={
+            <ProtectedRoute>
+              <AttributeEdit/>
+            </ProtectedRoute>
+          }
+        />
+      </Route>
       {/* ❌ 404 - Not Found Route */}
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
