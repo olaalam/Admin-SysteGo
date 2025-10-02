@@ -15,7 +15,7 @@ const Product = () => {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [priceDialogProduct, setPriceDialogProduct] = useState(null);
 
-  const products = data || [];
+  const products = data?.products || [];
 
   const handleDelete = async (item) => {
     try {

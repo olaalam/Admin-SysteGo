@@ -31,24 +31,26 @@ export default function DataTable({
   const [itemsPerPageState, setItemsPerPageState] = useState(itemsPerPage);
   const navigate = useNavigate();
 
-  // Get unique values for filterable columns
-const getFilterOptions = (columnKey) => {
-  const values = data
-    .map((item) => {
-      const value = item[columnKey];
-      if (typeof value === "object" && value !== null) {
-        return value.name; // 👈 ناخد الاسم بدل الـ object
-      }
-      return value;
-    })
-    .filter(Boolean);
-  return [...new Set(values)];
-};
+  // ✅ تأكد إن data Array
+  const safeData = Array.isArray(data) ? data : [];
 
+  // Get unique values for filterable columns
+  const getFilterOptions = (columnKey) => {
+    const values = safeData
+      .map((item) => {
+        const value = item[columnKey];
+        if (typeof value === "object" && value !== null) {
+          return value.name; // 👈 ناخد الاسم بدل الـ object
+        }
+        return value;
+      })
+      .filter(Boolean);
+    return [...new Set(values)];
+  };
 
   // Filter and search data
   const filteredData = useMemo(() => {
-    let filtered = data;
+    let filtered = [...safeData];
 
     // Apply search
     if (searchTerm) {
@@ -62,18 +64,18 @@ const getFilterOptions = (columnKey) => {
     // Apply filters
     Object.entries(selectedFilters).forEach(([key, value]) => {
       if (value) {
-filtered = filtered.filter((item) => {
-  const fieldValue = item[key];
-  if (typeof fieldValue === "object" && fieldValue !== null) {
-    return fieldValue.name === value;
-  }
-  return fieldValue === value;
-});
+        filtered = filtered.filter((item) => {
+          const fieldValue = item[key];
+          if (typeof fieldValue === "object" && fieldValue !== null) {
+            return fieldValue.name === value;
+          }
+          return fieldValue === value;
+        });
       }
     });
 
     return filtered;
-  }, [data, searchTerm, selectedFilters]);
+  }, [safeData, searchTerm, selectedFilters]);
 
   // Pagination
   const totalPages = Math.ceil(filteredData.length / itemsPerPageState);
@@ -203,7 +205,7 @@ filtered = filtered.filter((item) => {
                   {column.header}
                 </th>
               ))}
-              {showActions && (onEdit || onDelete) && ( // ✅ شرط جديد
+              {showActions && (onEdit || onDelete) && (
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
@@ -224,7 +226,7 @@ filtered = filtered.filter((item) => {
                         : item[column.key]}
                     </td>
                   ))}
-                  {showActions && (onEdit || onDelete) && ( // ✅ شرط جديد
+                  {showActions && (onEdit || onDelete) && (
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       <div className="flex space-x-2">
                         {onEdit && (
@@ -264,7 +266,9 @@ filtered = filtered.filter((item) => {
             ) : (
               <tr>
                 <td
-                  colSpan={columns.length + (showActions && (onEdit || onDelete) ? 1 : 0)} // ✅ تعديل
+                  colSpan={
+                    columns.length + (showActions && (onEdit || onDelete) ? 1 : 0)
+                  }
                   className="px-6 py-12 text-center text-gray-500"
                 >
                   No data found
