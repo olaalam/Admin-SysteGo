@@ -83,9 +83,9 @@ const ProductMediaTab = ({
         </div>
 
         {/* Gallery Preview */}
-        {form.gallery.length > 0 && (
+        {form.gallery_product.length > 0 && (
           <div className="grid grid-cols-4 gap-4 mt-4">
-            {form.gallery.map((img, idx) => (
+            {form.gallery_product.map((img, idx) => (
               <div key={idx} className="relative group">
                 <img
                   src={img}

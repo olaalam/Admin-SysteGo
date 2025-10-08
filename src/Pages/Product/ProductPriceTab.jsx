@@ -1,9 +1,11 @@
+// src/pages/ProductPriceTab.jsx
+
 import React from "react";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { X, Upload, ChevronDown, RotateCw, Copy } from "lucide-react";
-import useGet from "@/hooks/useGet"; // إضافة استيراد useGet
+import useGet from "@/hooks/useGet";
 import { toast } from "react-toastify";
 
 const ProductPriceTab = ({
@@ -16,21 +18,24 @@ const ProductPriceTab = ({
   handleOptionsChange,
   handleVariantFieldChange,
 }) => {
-  const [showVariationDropdown, setShowVariationDropdown] = React.useState(false);
+  const [showVariationDropdown, setShowVariationDropdown] =
+    React.useState(false);
 
   // استخدام useGet لتوليد الكود
-const { data,  refetch } = useGet("/api/admin/product/generate-code/", { manual: true });
-
+  const { data, refetch } = useGet("/api/admin/product/generate-code/", {
+    manual: true,
+  });
 
   // استخدام _id والمقارنات الصحيحة
   const uniqueVariations = React.useMemo(() => {
     const seenIds = new Set();
+    // التأكد من أن كل عنصر لديه _id قبل الإضافة إلى المجموعة
     return allVariations.filter((variation) => {
-      if (seenIds.has(variation._id)) {
-        return false;
+      if (variation._id && !seenIds.has(variation._id)) {
+        seenIds.add(variation._id);
+        return true;
       }
-      seenIds.add(variation._id);
-      return true;
+      return false;
     });
   }, [allVariations]);
 
@@ -74,37 +79,43 @@ const { data,  refetch } = useGet("/api/admin/product/generate-code/", { manual:
     selectedVariationIds.includes(v._id)
   );
 
-  // ⭐️ تعديل دالة generateVariantCode لاستخدام useGet ⭐️
-const generateVariantCode = async (index) => {
-  try {
-    await refetch(); // ده هيعمل تحديث للـ data في الستيت
-    if (!data?.code) {
-      throw new Error("No code returned");
+  // دالة لتوليد كود المتغير (Variant Code)
+  const generateVariantCode = async (index) => {
+    try {
+      await refetch(); // لإجراء طلب API والحصول على الكود الجديد
+      if (!data?.code) {
+        throw new Error("No code returned");
+      }
+      handleVariantFieldChange(index, "code", data.code);
+      toast.success(`Generated code: ${data.code}`);
+    } catch (err) {
+      console.error("Error generating code:", err);
+      toast.error("Failed to generate product code. Please try again.");
     }
-    handleVariantFieldChange(index, "code", data.code);
-    toast.success(`Generated code: ${data.code}`);
-  } catch (err) {
-    console.error("Error generating code:", err);
-    toast.error("Failed to generate product code. Please try again.");
-  }
-};
+  };
 
   const copyVariantCode = (code) => {
     if (!code) return;
-    navigator.clipboard.writeText(code).then(() => {
-      toast.success(`Code copied: ${code}`);
-    }).catch((err) => {
-      console.error("Could not copy text: ", err);
-      toast.error("Failed to copy code.");
-    });
+    navigator.clipboard
+      .writeText(code)
+      .then(() => {
+        toast.success(`Code copied: ${code}`);
+      })
+      .catch((err) => {
+        console.error("Could not copy text: ", err);
+        toast.error("Failed to copy code.");
+      });
   };
-
-  // ⭐️ نهاية التعديل ⭐️
 
   return (
     <div className="space-y-6">
       {/* Unit Price (تم الإبقاء عليها لأنها سعر المنتج الأساسي) */}
-      <div>
+
+
+
+      {/* low_stock and Quantity of the base product (if not variant) */}
+      <div className="grid grid-cols-2 gap-4">
+              <div>
         <Label className="text-sm font-medium text-gray-700 mb-2 block">
           Unit Price (EGP) <span className="text-red-500">*</span>
         </Label>
@@ -125,24 +136,21 @@ const generateVariantCode = async (index) => {
           />
         </div>
       </div>
-
-      {/* Discount (تم الإبقاء عليها لأنها خصم المنتج الأساسي) */}
-      <div>
-        <Label className="text-sm font-medium text-gray-700 mb-2 block">
-          Discount (%)
-        </Label>
-        <Input
-          type="number"
-          value={form.discount}
-          onChange={(e) =>
-            handleChange("discount", parseFloat(e.target.value) || 0)
-          }
-          placeholder="0"
-          className="h-11"
-          step="0.01"
-          min="0"
-          max="100"
-        />
+        <div>
+          <Label className="text-sm font-medium text-gray-700 mb-2 block">
+            low_stock 
+          </Label>
+          <Input
+            type="number"
+            value={form.low_stock}
+            onChange={(e) =>
+              handleChange("low_stock", parseInt(e.target.value) || 0)
+            }
+            placeholder="0"
+            className="h-11"
+            min="0"
+          />
+        </div>
       </div>
 
       {/* Different Prices Toggle */}
@@ -203,9 +211,7 @@ const generateVariantCode = async (index) => {
                         className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 cursor-pointer"
                       >
                         <Checkbox
-                          checked={selectedVariationIds.includes(
-                            variation._id
-                          )}
+                          checked={selectedVariationIds.includes(variation._id)}
                           onCheckedChange={() => toggleVariation(variation._id)}
                         />
                         <span className="text-sm text-gray-700">
@@ -249,7 +255,7 @@ const generateVariantCode = async (index) => {
               return (
                 <div
                   key={variation._id}
-                  className="p-4 border border-gray-200 rounded-lg bg-white shadow-sm space-y-4"
+                  className="p-24 border border-gray-200 rounded-lg bg-white shadow-sm space-y-4"
                 >
                   <h4 className="font-semibold text-gray-800">
                     {variation.name} Options
@@ -268,9 +274,9 @@ const generateVariantCode = async (index) => {
                           >
                             <Checkbox
                               checked={
-                                selectedOptionsMap[
-                                  variation._id
-                                ]?.includes(option.name) || false
+                                selectedOptionsMap[variation._id]?.includes(
+                                  option.name
+                                ) || false
                               }
                               onCheckedChange={() =>
                                 toggleOption(variation._id, option.name)
@@ -300,9 +306,7 @@ const generateVariantCode = async (index) => {
                           <span>{option}</span>
                           <button
                             type="button"
-                            onClick={() =>
-                              toggleOption(variation._id, option)
-                            }
+                            onClick={() => toggleOption(variation._id, option)}
                             className="hover:bg-gray-200 rounded-full p-0.5"
                           >
                             <X className="h-3 w-3" />
@@ -334,7 +338,7 @@ const generateVariantCode = async (index) => {
                           Code
                         </th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                          Stock
+                          quantity
                         </th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                           Photo
@@ -404,21 +408,22 @@ const generateVariantCode = async (index) => {
                               </button>
                             </div>
                           </td>
-                          <td className="px-4 py-3">
-                            <Input
-                              type="number"
-                              value={variant.stock || 0}
-                              onChange={(e) =>
-                                handleVariantFieldChange(
-                                  index,
-                                  "stock",
-                                  parseInt(e.target.value) || 0
-                                )
-                              }
-                              className="h-9 w-24"
-                              min="0"
-                            />
-                          </td>
+<td className="px-4 py-3">
+  <Input
+    type="number"
+    value={variant.quantity || 0}
+    onChange={(e) =>
+      handleVariantFieldChange(
+        index,
+        "quantity",
+        parseInt(e.target.value) || 0
+      )
+    }
+    className="h-9 w-24"
+    min="0"
+  />
+</td>
+
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-2">
                               {variant.image ? (

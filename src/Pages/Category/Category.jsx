@@ -63,7 +63,12 @@ const columns = [
 
 
   if (loading) return <Loader />;
-  if (error) return <div className="p-6 text-red-600">{error}</div>;
+  if (error) return (
+    <div className="p-6 bg-red-50 border border-red-200 rounded-lg">
+      <p className="text-red-600 font-medium">Error loading Categories</p>
+      <p className="text-red-500 text-sm mt-1">{error}</p>
+    </div>
+  );
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
