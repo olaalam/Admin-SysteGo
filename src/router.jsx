@@ -16,6 +16,7 @@ import ProductEdit from "./Pages/Product/ProductEdit";
 import Attribute from "./Pages/Attribute/Attribute";
 import AttributeAdd from "./Pages/Attribute/AttributeAdd";
 import AttributeEdit from "./Pages/Attribute/AttributeEdit";
+import Barcode from "./Pages/Barcode/Barcode";
 export default function AppRoutes() {
   return (
     <Routes>
@@ -138,7 +139,16 @@ export default function AppRoutes() {
             </ProtectedRoute>
           }
         />
+
       </Route>
+      <Route
+        path="barcode"
+        element={
+          <ProtectedRoute>
+            <Barcode />
+          </ProtectedRoute>
+        }
+      />
       {/* ❌ 404 - Not Found Route */}
       <Route path="*" element={<NotFoundPage />} />
     </Routes>

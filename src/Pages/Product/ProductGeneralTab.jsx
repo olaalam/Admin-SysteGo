@@ -226,12 +226,12 @@ const ProductGeneralTab = ({ form, handleChange, categories, brands, loading }) 
     <label className="block text-sm font-medium text-gray-700">
       Expiry Date
     </label>
-    <input
-      type="date"
-      value={form.date_of_expiery}
-      onChange={(e) => handleChange("date_of_expiery", e.target.value)}
-      className="mt-1 block w-full border rounded-md p-2"
-    />
+<input
+  type="date"
+  value={form.date_of_expiery}
+  onChange={(e) => handleChange("date_of_expiery", e.target.value)}
+  className="mt-1 block w-full border rounded-md p-2"
+/>
   </div>
 )}
 
