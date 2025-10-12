@@ -17,6 +17,12 @@ import Attribute from "./Pages/Attribute/Attribute";
 import AttributeAdd from "./Pages/Attribute/AttributeAdd";
 import AttributeEdit from "./Pages/Attribute/AttributeEdit";
 import Barcode from "./Pages/Barcode/Barcode";
+import Admin from "./Pages/Admin/Admin";
+import AdminAdd from "./Pages/Admin/AdminAdd";
+import AdminEdit from "./Pages/Admin/AdminEdit";
+import City from "./Pages/City/City";
+import CityAdd from "./Pages/City/CityAdd";
+import CityEdit from "./Pages/City/CityEdit";
 export default function AppRoutes() {
   return (
     <Routes>
@@ -135,7 +141,63 @@ export default function AppRoutes() {
           path="edit/:id"
           element={
             <ProtectedRoute>
-              <AttributeEdit/>
+              <AttributeEdit />
+            </ProtectedRoute>
+          }
+        />
+
+      </Route>
+      {/* ✅ Admin (Nested Routes محمية) */}
+      <Route path="admin">
+        <Route
+          index
+          element={
+            <ProtectedRoute>
+              <Admin />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="add"
+          element={
+            <ProtectedRoute>
+              <AdminAdd />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="edit/:id"
+          element={
+            <ProtectedRoute>
+              <AdminEdit />
+            </ProtectedRoute>
+          }
+        />
+
+      </Route>
+                  {/* ✅ City (Nested Routes محمية) */}
+      <Route path="city">
+        <Route
+          index
+          element={
+            <ProtectedRoute>
+              <City />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="add"
+          element={
+            <ProtectedRoute>
+              <CityAdd />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="edit/:id"
+          element={
+            <ProtectedRoute>
+              <CityEdit/>
             </ProtectedRoute>
           }
         />

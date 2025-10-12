@@ -4,7 +4,7 @@ import DataTable from "@/components/DataTable";
 import Loader from "@/components/Loader";
 import DeleteDialog from "@/components/DeleteForm";
 // Import the new component
-import VariablePricesDialog from "@/components/VariablePricesDialog"; 
+import VariablePricesDialog from "@/components/VariablePricesDialog";
 import useGet from "@/hooks/useGet";
 import useDelete from "@/hooks/useDelete";
 
@@ -18,22 +18,22 @@ const Product = () => {
   // Helper function to fix image URLs (kept for renderProductInfo)
   const getImageUrl = (imageStr) => {
     if (!imageStr) return "";
-    
+
     // If it's already a full URL, return as is
     if (imageStr.startsWith("http://") || imageStr.startsWith("https://")) {
       return imageStr;
     }
-    
+
     // If it's a data URI, return as is
     if (imageStr.startsWith("data:")) {
       return imageStr;
     }
-    
+
     // If it's a base64 string without prefix, add it
     if (imageStr.match(/^[A-Za-z0-9+/=]+$/)) {
       return `data:image/jpeg;base64,${imageStr}`;
     }
-    
+
     // Otherwise return as is
     return imageStr;
   };
@@ -76,7 +76,7 @@ const Product = () => {
         <div className="relative flex-shrink-0">
           <img
             // Use getImageUrl for the main product image
-            src={getImageUrl(item.image)} 
+            src={getImageUrl(item.image)}
             alt={item.name}
             className="h-16 w-16 object-cover rounded-lg border-2 border-gray-200"
           />
@@ -122,13 +122,12 @@ const Product = () => {
         <div className="flex items-center gap-2">
           <span className="text-xs text-gray-500 w-16">Stock:</span>
           <span
-            className={`text-sm font-semibold ${
-              item.quantity < 10
+            className={`text-sm font-semibold ${item.quantity < 10
                 ? "text-red-600"
                 : item.quantity < 50
-                ? "text-orange-600"
-                : "text-green-600"
-            }`}
+                  ? "text-orange-600"
+                  : "text-green-600"
+              }`}
           >
             {item.quantity}
           </span>
@@ -154,16 +153,14 @@ const Product = () => {
   // Badge component
   const renderBadge = (value) => (
     <span
-      className={`inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full ${
-        value
+      className={`inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full ${value
           ? "bg-green-50 text-green-700 ring-1 ring-green-600/20"
           : "bg-gray-50 text-gray-600 ring-1 ring-gray-300/50"
-      }`}
+        }`}
     >
       <span
-        className={`h-1.5 w-1.5 rounded-full mr-1.5 ${
-          value ? "bg-green-500" : "bg-gray-400"
-        }`}
+        className={`h-1.5 w-1.5 rounded-full mr-1.5 ${value ? "bg-green-500" : "bg-gray-400"
+          }`}
       />
       {value ? "Yes" : "No"}
     </span>
@@ -182,11 +179,10 @@ const Product = () => {
           <div className="flex items-center gap-1.5 text-xs">
             <span className="text-gray-500">Expires:</span>
             <span
-              className={`font-medium ${
-                isExpiringSoon(item.date_of_expiery)
+              className={`font-medium ${isExpiringSoon(item.date_of_expiery)
                   ? "text-red-600"
                   : "text-gray-700"
-              }`}
+                }`}
             >
               {formatDate(item.date_of_expiery)}
             </span>
@@ -278,7 +274,9 @@ const Product = () => {
         data={products}
         columns={columns}
         title="Product Management"
-        onEdit={(item) => {}} // DataTable handles navigation via editPath
+        onAdd={() => alert("Add new product clicked!")}
+
+        onEdit={(item) => { }} // DataTable handles navigation via editPath
         onDelete={(item) => setDeleteTarget(item)}
         addButtonText="Add Product"
         addPath="add"

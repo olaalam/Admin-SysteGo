@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Menu, ChevronDown, ChevronUp } from "lucide-react";
+import { Menu, ChevronDown, ChevronUp, MapPin } from "lucide-react";
 import {
   LayoutDashboard,
   Monitor,
@@ -27,6 +27,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
 import logo from "@/assets/logo.png";
 
+
 const menuItems = [
   { name: "Dashboard", icon: LayoutDashboard, path: "/" },
   {
@@ -47,6 +48,14 @@ const menuItems = [
     children: [
       { name: "List", path: "/purchase/list" },
       { name: "Add", path: "/purchase/add" },
+    ],
+  },
+    {
+    name: "Locations",
+    icon: MapPin, // 👈 هنضيف الأيقونة تحت
+    children: [
+      { name: "City", path: "/city" },
+      { name: "Country", path: "/country" },
     ],
   },
   {
@@ -103,7 +112,7 @@ const menuItems = [
     name: "People",
     icon: Users,
     children: [
-      { name: "List", path: "/people/list" },
+      { name: "Admin", path: "/admin" },
       { name: "Add", path: "/people/add" },
     ],
   },
