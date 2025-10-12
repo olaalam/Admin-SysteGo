@@ -5,16 +5,16 @@ import DeleteDialog from "@/components/DeleteForm";
 import useGet from "@/hooks/useGet";
 import useDelete from "@/hooks/useDelete";
 
-const City = () => {
-  const { data, loading, error, refetch } = useGet("/api/admin/city");
-  const { deleteData, loading: deleting } = useDelete("/api/admin/city/delete");
+const Country = () => {
+  const { data, loading, error, refetch } = useGet("/api/admin/country");
+  const { deleteData, loading: deleting } = useDelete("/api/admin/country/delete");
 
   const [deleteTarget, setDeleteTarget] = useState(null);
-  const cities = data?.cities || [];
+  const cities = data?.countries || [];
 
   const handleDelete = async (item) => {
     try {
-      await deleteData(`/api/admin/city/${item._id}`);
+      await deleteData(`/api/admin/country/${item._id}`);
       refetch();
     } finally {
       setDeleteTarget(null);
@@ -22,13 +22,8 @@ const City = () => {
   };
 
   const columns = [
-    { key: "name", header: "City Name", filterable: true },
-    {
-      key: "country.name",
-      header: "Country",
-      filterable: true,
-      render: (value, row) => row.country?.name || "N/A",
-    },
+    { key: "name", header: "country Name", filterable: true },
+
   ];
 
   if (loading) return <Loader />;
@@ -40,11 +35,11 @@ const City = () => {
       <DataTable
         data={cities}
         columns={columns}
-        title="City Management"
-        onAdd={() => alert("Add new city clicked!")}
-        onEdit={(item) => alert(`Edit city: ${item.name}`)}
+        title="country Management"
+        onAdd={() => alert("Add new country clicked!")}
+        onEdit={(item) => alert(`Edit country: ${item.name}`)}
         onDelete={(item) => setDeleteTarget(item)}
-        addButtonText="Add City"
+        addButtonText="Add country"
         addPath="add"
         editPath={(item) => `edit/${item._id}`}
         itemsPerPage={10}
@@ -54,8 +49,8 @@ const City = () => {
 
       {deleteTarget && (
         <DeleteDialog
-          title="Delete City"
-          message={`Are you sure you want to delete city "${deleteTarget.name}"?`}
+          title="Delete country"
+          message={`Are you sure you want to delete country "${deleteTarget.name}"?`}
           onConfirm={() => handleDelete(deleteTarget)}
           onCancel={() => setDeleteTarget(null)}
           loading={deleting}
@@ -65,4 +60,4 @@ const City = () => {
   );
 };
 
-export default City;
+export default Country;

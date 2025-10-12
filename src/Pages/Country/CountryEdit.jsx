@@ -6,13 +6,13 @@ import { toast } from "react-toastify";
 import Loader from "@/components/Loader";
 import AddPage from "@/components/AddPage";
 
-export default function CityEdit() {
+export default function CountryEdit() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const { putData, loading: updating } = usePut(`/api/admin/city/${id}`);
+  const { putData, loading: updating } = usePut(`/api/admin/country/${id}`);
 
-  const [cityData, setCityData] = useState(null);
+  const [countryData, setcountryData] = useState(null);
   const [countries, setCountries] = useState([]);
   const [fetching, setFetching] = useState(true);
 
@@ -20,19 +20,19 @@ export default function CityEdit() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await api.get(`/api/admin/city/${id}`);
-        const city = res.data?.data?.city || {};
+        const res = await api.get(`/api/admin/country/${id}`);
+        const country = res.data?.data?.country || {};
         const allCountries = res.data?.data?.countries || [];
 
         setCountries(allCountries);
 
-        setCityData({
-          name: city.name || "",
-          countryId: city.country?._id || "",
+        setcountryData({
+          name: country.name || "",
+          countryId: country.country?._id || "",
         });
       } catch (err) {
-        toast.error("Failed to fetch city data");
-        console.error("❌ Error fetching city:", err);
+        toast.error("Failed to fetch country data");
+        console.error("❌ Error fetching country:", err);
       } finally {
         setFetching(false);
       }
@@ -44,25 +44,19 @@ export default function CityEdit() {
   // إعداد الفورم
   const fields = useMemo(() => [
     { key: "name", label: "Name", required: true },
-    {
-      key: "country",
-      label: "Country",
-      type: "select",
-      required: true,
-      options: countries.map((c) => ({ label: c.name, value: c._id })),
-    },
+
   ], [countries]);
 
   const handleSubmit = async (formData) => {
     try {
       await putData(formData);
-      toast.success("City updated successfully!");
-      navigate("/city");
+      toast.success("country updated successfully!");
+      navigate("/country");
     } catch (err) {
       const errorMessage =
         err.response?.data?.error?.message ||
         err.response?.data?.message ||
-        "Failed to update city";
+        "Failed to update country";
 
       const errorDetails = err.response?.data?.error?.details;
 
@@ -76,18 +70,18 @@ export default function CityEdit() {
     }
   };
 
-  const handleCancel = () => navigate("/city");
+  const handleCancel = () => navigate("/country");
 
   if (fetching) return <Loader />;
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
-      {cityData && (
+      {countryData && (
         <AddPage
-          title={`Edit City: ${cityData.name || "..."}`}
-          description="Update city details"
+          title={`Edit country: ${countryData.name || "..."}`}
+          description="Update country details"
           fields={fields}
-          initialData={cityData}
+          initialData={countryData}
           onSubmit={handleSubmit}
           onCancel={handleCancel}
           loading={updating}

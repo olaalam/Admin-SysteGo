@@ -1,6 +1,8 @@
+// src/components/AddPage.jsx (النسخة المعدلة)
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { UserPlus } from "lucide-react";
+import { ComboboxMultiSelect } from "@/components/ui/combobox-multi-select";
 
 const AddPage = ({
   title = "Add Item",
@@ -14,40 +16,48 @@ const AddPage = ({
 }) => {
   const [formData, setFormData] = useState({});
 
-useEffect(() => {
-  if (initialData && Object.keys(initialData).length > 0) {
-    const filteredData = fields.reduce((acc, field) => {
-      if (field.type === "array") {
-        acc[field.key] = Array.isArray(initialData[field.key])
-          ? initialData[field.key]
-          : []; // ✅ لازم يكون Array
-      } else {
-        acc[field.key] =
-          initialData[field.key] !== undefined
+  // 1. useEffect for initial data and field structure (Existing)
+  useEffect(() => {
+    // هذه العملية ستحصل بشكل طبيعي عند استخدام الـ `key` الديناميكي في AdminAdd.jsx
+    if (initialData && Object.keys(initialData).length > 0) {
+      const filteredData = fields.reduce((acc, field) => {
+        if (field.type === "array" || field.type === "multiselect") {
+          acc[field.key] = Array.isArray(initialData[field.key])
             ? initialData[field.key]
-            : field.type === "checkbox"
-            ? false
-            : "";
-      }
-      return acc;
-    }, {});
-    setFormData(filteredData);
-  } else {
-    const defaults = fields.reduce((acc, field) => {
-      if (field.type === "array") {
-        acc[field.key] = []; // ✅ دايمًا Array
-      } else {
-        acc[field.key] = field.type === "checkbox" ? false : "";
-      }
-      return acc;
-    }, {});
-    setFormData(defaults);
-  }
-}, [JSON.stringify(initialData), fields]);
+            : [];
+        } else {
+          acc[field.key] =
+            initialData[field.key] !== undefined
+              ? initialData[field.key]
+              : field.type === "checkbox"
+              ? false
+              : "";
+        }
+        return acc;
+      }, {});
+      setFormData(filteredData);
+    } else {
+      const defaults = fields.reduce((acc, field) => {
+        if (field.type === "array" || field.type === "multiselect") {
+          acc[field.key] = [];
+        } else {
+          acc[field.key] = field.type === "checkbox" ? false : "";
+        }
+        return acc;
+      }, {});
+      setFormData(defaults);
+    }
+  }, [JSON.stringify(initialData), fields]);
 
-
+  // ✅ الوظيفة المعدلة: لاستدعاء الـ onChange الخارجي عند تغيير القيمة
   const handleChange = (key, value) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
+    
+    // استدعاء الـ onChange الخارجي إذا كان موجوداً (خاصة لحقل positionId)
+    const fieldDef = fields.find(f => f.key === key);
+    if (fieldDef && fieldDef.onChange) {
+        fieldDef.onChange(value);
+    }
   };
 
   const handleArrayChange = (key, index, subKey, value) => {
@@ -73,7 +83,6 @@ useEffect(() => {
     setFormData((prev) => ({ ...prev, [key]: newArray }));
   };
 
-  // ✅ Handle image upload
   const handleImageChange = async (key, file) => {
     if (!file) return;
     const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"];
@@ -92,13 +101,18 @@ useEffect(() => {
       };
       reader.readAsDataURL(file);
     } catch (error) {
-      toast.error("Failed to read image file", error);
+      toast.error("Failed to read image file",error);
     }
   };
 
   const handleSubmit = () => {
     for (let field of fields) {
-      if (field.required && !formData[field.key]) {
+      if (field.required && !formData[field.key]?.length && field.type === "multiselect") {
+        toast.error(`Please select at least one ${field.label}`);
+        return;
+      }
+
+      if (field.required && !formData[field.key] && field.type !== "checkbox") {
         toast.error(`Please fill in ${field.label}`);
         return;
       }
@@ -107,7 +121,6 @@ useEffect(() => {
     if (formData.from && formData.to) {
       const fromDate = new Date(formData.from);
       const toDate = new Date(formData.to);
-
       if (fromDate > toDate) {
         toast.error("Valid From date cannot be later than Valid To date");
         return;
@@ -140,8 +153,8 @@ useEffect(() => {
                 {field.required && <span className="text-red-500">*</span>}
               </label>
 
-              {/* ✅ Array field handler */}
               {field.type === "array" ? (
+                // ... (Array logic remains the same)
                 <div className="space-y-3">
                   {(formData[field.key] || []).map((item, idx) => (
                     <div
@@ -200,7 +213,16 @@ useEffect(() => {
                     + Add {field.label}
                   </button>
                 </div>
+              ) : field.type === "multiselect" ? (
+                <ComboboxMultiSelect
+                  options={field.options || []}
+                  selected={formData[field.key] || []}
+                  onChange={(val) => handleChange(field.key, val)}
+                  placeholder={`Select ${field.label}`}
+                  creatable={field.creatable}
+                />
               ) : field.type === "select" ? (
+                // ✅ تعديل حقل الـ Select لربط الـ onChange الخارجي
                 <select
                   value={formData[field.key] || ""}
                   onChange={(e) => handleChange(field.key, e.target.value)}
@@ -214,6 +236,7 @@ useEffect(() => {
                   ))}
                 </select>
               ) : field.type === "checkbox" ? (
+                // ... (Checkbox logic remains the same)
                 <div className="flex items-center">
                   <input
                     type="checkbox"
@@ -223,6 +246,7 @@ useEffect(() => {
                   />
                 </div>
               ) : field.type === "image" ? (
+                // ... (Image logic remains the same)
                 <div className="space-y-3">
                   <input
                     type="file"
@@ -243,6 +267,7 @@ useEffect(() => {
                   )}
                 </div>
               ) : (
+                // ... (Default input logic remains the same)
                 <input
                   type={field.type || "text"}
                   value={formData[field.key] ?? ""}

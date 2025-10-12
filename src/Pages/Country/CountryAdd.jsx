@@ -1,10 +1,11 @@
+
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AddPage from "@/components/AddPage";
 import api from "@/api/api";
 import { toast } from "react-toastify";
 
-const CityAdd = () => {
+const CountryAdd = () => {
   const navigate = useNavigate();
   const [countries, setCountries] = useState([]);
 
@@ -12,7 +13,7 @@ const CityAdd = () => {
   useEffect(() => {
     const fetchCountries = async () => {
       try {
-        const response = await api.get("/api/admin/city");
+        const response = await api.get("/api/admin/country");
         const countryList = response.data?.data?.countries || [];
         setCountries(countryList);
       } catch (err) {
@@ -27,29 +28,20 @@ const CityAdd = () => {
   // إعداد الـ fields
   const fields = [
     { key: "name", label: "Name", required: true },
-    {
-      key: "country",
-      label: "Country",
-      type: "select",
-      required: true,
-      options: countries.map((country) => ({
-        label: country.name,
-        value: country._id,
-      })),
-    },
+
   ];
 
   // الإرسال
   const handleSubmit = async (data) => {
     try {
-      await api.post("/api/admin/city", data); // ← تأكد إن الباكند بياخد countryId
-      toast.success("City added successfully!");
-      navigate("/city");
+      await api.post("/api/admin/country", data); // ← تأكد إن الباكند بياخد countryId
+      toast.success("country added successfully!");
+      navigate("/country");
     } catch (err) {
       const errorMessage =
         err.response?.data?.error?.message ||
         err.response?.data?.message ||
-        "Failed to add city";
+        "Failed to add country";
 
       const errorDetails = err.response?.data?.error?.details;
 
@@ -66,15 +58,15 @@ const CityAdd = () => {
   return (
     <div className="p-6">
       <AddPage
-        title="Add City"
-        description="Select country and enter city name"
+        title="Add country"
+        description="Select country and enter country name"
         fields={fields}
         onSubmit={handleSubmit}
-        onCancel={() => navigate("/city")}
+        onCancel={() => navigate("/country")}
         initialData={{}}
       />
     </div>
   );
 };
 
-export default CityAdd;
+export default CountryAdd;

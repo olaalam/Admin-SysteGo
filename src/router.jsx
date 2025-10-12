@@ -23,6 +23,9 @@ import AdminEdit from "./Pages/Admin/AdminEdit";
 import City from "./Pages/City/City";
 import CityAdd from "./Pages/City/CityAdd";
 import CityEdit from "./Pages/City/CityEdit";
+import Country from "./Pages/Country/Country";
+import CountryAdd from "./Pages/Country/CountryAdd";
+import CountryEdit from "./Pages/Country/CountryEdit";
 export default function AppRoutes() {
   return (
     <Routes>
@@ -145,7 +148,6 @@ export default function AppRoutes() {
             </ProtectedRoute>
           }
         />
-
       </Route>
       {/* ✅ Admin (Nested Routes محمية) */}
       <Route path="admin">
@@ -173,9 +175,8 @@ export default function AppRoutes() {
             </ProtectedRoute>
           }
         />
-
       </Route>
-                  {/* ✅ City (Nested Routes محمية) */}
+      {/* ✅ City (Nested Routes محمية) */}
       <Route path="city">
         <Route
           index
@@ -197,11 +198,37 @@ export default function AppRoutes() {
           path="edit/:id"
           element={
             <ProtectedRoute>
-              <CityEdit/>
+              <CityEdit />
             </ProtectedRoute>
           }
         />
-
+      </Route>
+      {/* ✅ Country (Nested Routes محمية) */}
+      <Route path="country">
+        <Route
+          index
+          element={
+            <ProtectedRoute>
+              <Country />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="add"
+          element={
+            <ProtectedRoute>
+              <CountryAdd />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="edit/:id"
+          element={
+            <ProtectedRoute>
+              <CountryEdit />
+            </ProtectedRoute>
+          }
+        />
       </Route>
       <Route
         path="barcode"
