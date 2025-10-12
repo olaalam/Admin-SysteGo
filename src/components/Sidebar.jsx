@@ -112,7 +112,7 @@ const menuItems = [
     icon: Users,
     children: [
       { name: "Admin", path: "/admin" },
-      { name: "Add", path: "/people/add" },
+      { name: "Supplier", path: "/supplier" },
     ],
   },
   {

@@ -32,6 +32,9 @@ import WareHouseEdit from "./Pages/WareHouse/WareHouseEdit";
 import Accounting from "./Pages/Accounting/Accounting";
 import AccountingAdd from "./Pages/Accounting/AccountingAdd";
 import AccountingEdit from "./Pages/Accounting/AccountingEdit";
+import Supplier from "./Pages/Supplier/Supplier";
+import SupplierAdd from "./Pages/Supplier/SupplierAdd";
+import SupplierEdit from "./Pages/Supplier/SupplierEdit";
 export default function AppRoutes() {
   return (
     <Routes>
@@ -285,7 +288,34 @@ export default function AppRoutes() {
           path="edit/:id"
           element={
             <ProtectedRoute>
-              <AccountingEdit/>
+              <AccountingEdit />
+            </ProtectedRoute>
+          }
+        />
+      </Route>
+      {/* ✅ Supplier (Nested Routes محمية) */}
+      <Route path="supplier">
+        <Route
+          index
+          element={
+            <ProtectedRoute>
+              <Supplier />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="add"
+          element={
+            <ProtectedRoute>
+              <SupplierAdd />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="edit/:id"
+          element={
+            <ProtectedRoute>
+              <SupplierEdit />
             </ProtectedRoute>
           }
         />
