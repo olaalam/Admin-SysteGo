@@ -130,7 +130,8 @@ const menuItems = [
     icon: Factory,
     children: [
       { name: "List", path: "/manufacturing/list" },
-      { name: "Add", path: "/manufacturing/add" },
+      { name: "WareHouse", path: "/warehouse" },
+
     ],
   },
   {

@@ -26,6 +26,9 @@ import CityEdit from "./Pages/City/CityEdit";
 import Country from "./Pages/Country/Country";
 import CountryAdd from "./Pages/Country/CountryAdd";
 import CountryEdit from "./Pages/Country/CountryEdit";
+import WareHouse from "./Pages/WareHouse/WareHouse";
+import WareHouseAdd from "./Pages/WareHouse/WareHouseAdd";
+import WareHouseEdit from "./Pages/WareHouse/WareHouseEdit";
 export default function AppRoutes() {
   return (
     <Routes>
@@ -226,6 +229,33 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute>
               <CountryEdit />
+            </ProtectedRoute>
+          }
+        />
+      </Route>
+      {/* ✅ WareHouse (Nested Routes محمية) */}
+      <Route path="warehouse">
+        <Route
+          index
+          element={
+            <ProtectedRoute>
+              <WareHouse />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="add"
+          element={
+            <ProtectedRoute>
+              <WareHouseAdd />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="edit/:id"
+          element={
+            <ProtectedRoute>
+              <WareHouseEdit />
             </ProtectedRoute>
           }
         />
