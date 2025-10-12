@@ -29,6 +29,9 @@ import CountryEdit from "./Pages/Country/CountryEdit";
 import WareHouse from "./Pages/WareHouse/WareHouse";
 import WareHouseAdd from "./Pages/WareHouse/WareHouseAdd";
 import WareHouseEdit from "./Pages/WareHouse/WareHouseEdit";
+import Accounting from "./Pages/Accounting/Accounting";
+import AccountingAdd from "./Pages/Accounting/AccountingAdd";
+import AccountingEdit from "./Pages/Accounting/AccountingEdit";
 export default function AppRoutes() {
   return (
     <Routes>
@@ -256,6 +259,33 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute>
               <WareHouseEdit />
+            </ProtectedRoute>
+          }
+        />
+      </Route>
+      {/* ✅ Accounting (Nested Routes محمية) */}
+      <Route path="accounting">
+        <Route
+          index
+          element={
+            <ProtectedRoute>
+              <Accounting />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="add"
+          element={
+            <ProtectedRoute>
+              <AccountingAdd />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="edit/:id"
+          element={
+            <ProtectedRoute>
+              <AccountingEdit/>
             </ProtectedRoute>
           }
         />

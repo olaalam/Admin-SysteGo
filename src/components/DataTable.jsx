@@ -102,7 +102,7 @@ export default function DataTable({
               if (addPath) navigate(addPath);
               else onAdd();
             }}
-            className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+            className="bg-primary hover:bg-teal-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
           >
             <Plus size={20} />
             {addButtonText}
@@ -337,7 +337,7 @@ export default function DataTable({
                         onClick={() => setCurrentPage(pageNum)}
                         className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                           currentPage === pageNum
-                            ? "bg-teal-600 text-white"
+                            ? "bg-primary text-white"
                             : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-300"
                         }`}
                       >

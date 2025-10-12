@@ -96,8 +96,7 @@ const menuItems = [
     name: "Accounting",
     icon: BookOpen,
     children: [
-      { name: "List", path: "/accounting/list" },
-      { name: "Add", path: "/accounting/add" },
+      { name: "List", path: "/accounting/" },
     ],
   },
   {
