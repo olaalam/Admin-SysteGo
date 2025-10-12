@@ -35,6 +35,9 @@ import AccountingEdit from "./Pages/Accounting/AccountingEdit";
 import Supplier from "./Pages/Supplier/Supplier";
 import SupplierAdd from "./Pages/Supplier/SupplierAdd";
 import SupplierEdit from "./Pages/Supplier/SupplierEdit";
+import PaymentMethod from "./Pages/PaymentMethod/PaymentMethod";
+import PaymentMethodAdd from "./Pages/PaymentMethod/PaymentMethodAdd";
+import PaymentMethodEdit from "./Pages/PaymentMethod/PaymentMethodEdit";
 export default function AppRoutes() {
   return (
     <Routes>
@@ -316,6 +319,33 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute>
               <SupplierEdit />
+            </ProtectedRoute>
+          }
+        />
+      </Route>
+            {/* ✅ PaymentMethod (Nested Routes محمية) */}
+      <Route path="payment_method">
+        <Route
+          index
+          element={
+            <ProtectedRoute>
+              <PaymentMethod />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="add"
+          element={
+            <ProtectedRoute>
+              <PaymentMethodAdd />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="edit/:id"
+          element={
+            <ProtectedRoute>
+              <PaymentMethodEdit />
             </ProtectedRoute>
           }
         />
