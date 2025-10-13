@@ -1,43 +1,36 @@
-
-import React, { useEffect, useState } from "react";
+// src/pages/CountryAdd.jsx (النسخة النهائية باستخدام usePost)
+import React from "react"; // ⭐️ تم إزالة useEffect و useState غير الضروريين
 import { useNavigate } from "react-router-dom";
 import AddPage from "@/components/AddPage";
-import api from "@/api/api";
 import { toast } from "react-toastify";
+// ⭐️ استيراد الـ Hook المخصص
+import usePost from "@/hooks/usePost"; 
 
 const CountryAdd = () => {
   const navigate = useNavigate();
-  const [countries, setCountries] = useState([]);
 
-  // جلب الدول من API
-  useEffect(() => {
-    const fetchCountries = async () => {
-      try {
-        const response = await api.get("/api/admin/country");
-        const countryList = response.data?.data?.countries || [];
-        setCountries(countryList);
-      } catch (err) {
-        toast.error("Failed to load countries");
-        console.error("Error fetching countries:", err);
-      }
-    };
+  // ⭐️ استخدام usePost: تحديد المسار وجلب postData وحالة التحميل loading
+  const { postData, loading } = usePost("/api/admin/country");
 
-    fetchCountries();
-  }, []);
-
-  // إعداد الـ fields
+  // إعداد الـ fields (تم تبسيطها)
   const fields = [
-    { key: "name", label: "Name", required: true },
-
+    { key: "name", label: "Country Name", required: true },
+    // إضافة حقل اختياري لحالة التفعيل
+    { key: "status", label: "Is Active", type: "switch", initialValue: true }, 
   ];
 
   // الإرسال
   const handleSubmit = async (data) => {
     try {
-      await api.post("/api/admin/country", data); // ← تأكد إن الباكند بياخد countryId
-      toast.success("country added successfully!");
+      console.log("📤 Submitting data:", data);
+
+      // ⭐️ استخدام postData بدلاً من api.post
+      await postData(data); 
+
+      toast.success("Country added successfully! 🎉");
       navigate("/country");
     } catch (err) {
+      // ✅ التعامل مع الأخطاء (نفس المنطق التفصيلي)
       const errorMessage =
         err.response?.data?.error?.message ||
         err.response?.data?.message ||
@@ -58,12 +51,14 @@ const CountryAdd = () => {
   return (
     <div className="p-6">
       <AddPage
-        title="Add country"
-        description="Select country and enter country name"
+        title="Add Country"
+        description="Enter the name of the new country"
         fields={fields}
         onSubmit={handleSubmit}
         onCancel={() => navigate("/country")}
-        initialData={{}}
+        // ⭐️ استخدام حالة التحميل من الـ Hook
+        loading={loading}
+        initialData={{ name: "", status: true }}
       />
     </div>
   );

@@ -1,15 +1,17 @@
-// src/pages/BankAccountAdd.jsx
+// src/pages/BankAccountAdd.jsx (النسخة النهائية باستخدام usePost)
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AddPage from "@/components/AddPage";
-import api from "@/api/api";
 import { toast } from "react-toastify";
+// ⭐️ افتراض: استخدام Hook مخصص للـ POST لتبسيط إدارة التحميل
+import { usePost } from "@/hooks/usePost"; // يجب توفر هذا الـ Hook في مسارك
 
 const BankAccountAdd = () => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
 
-  // ✅ الـ fields بتطابق الداتا اللي في الجدول
+  // ⭐️ استخدام usePost بدلاً من إدارة setLoading يدوياً
+  const { postData, loading: submitting } = usePost("/api/admin/bank_account/");
+
   const fields = [
     { 
       key: "account_no", 
@@ -35,7 +37,7 @@ const BankAccountAdd = () => {
     { 
       key: "is_default", 
       label: "Set as Default Account", 
-      type: "checkbox",
+      type: "switch", 
       required: false 
     },
     { 
@@ -48,18 +50,19 @@ const BankAccountAdd = () => {
   ];
 
   const handleSubmit = async (data) => {
-    setLoading(true);
     try {
       console.log("📤 Submitting data:", data);
       
-      await api.post("/api/admin/bank_account/", data);
+      // ⭐️ استخدام postData من الـ Hook
+      await postData(data);
       
       toast.success("Bank account added successfully!");
       navigate("/accounting");
     } catch (err) {
       console.error("❌ Error adding bank account:", err);
       
-      // ✅ عرض الأخطاء من الـ API
+      // ✅ ملاحظة: إدارة الأخطاء تتم عادةً داخل الـ Hook نفسه لتبسيط الكود هنا
+      // لكن يمكننا ترك منطق عرض التوست هنا (أو إزالته إذا كان Hook usePost يعالجها)
       const errorMessage = 
         err.response?.data?.error?.message || 
         err.response?.data?.message || 
@@ -72,8 +75,6 @@ const BankAccountAdd = () => {
       } else {
         toast.error(errorMessage);
       }
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -94,7 +95,8 @@ const BankAccountAdd = () => {
           is_default: false,
           note: ""
         }}
-        loading={loading}
+        // ⭐️ استخدام حالة التحميل من الـ Hook
+        loading={submitting} 
       />
     </div>
   );

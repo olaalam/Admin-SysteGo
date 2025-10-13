@@ -1,19 +1,27 @@
-// src/pages/categoryAdd.jsx
-import React, { useEffect, useState } from "react";
+// src/pages/categoryAdd.jsx (النسخة النهائية باستخدام usePost)
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AddPage from "@/components/AddPage";
 import api from "@/api/api";
 import { toast } from "react-toastify";
+// ⭐️ استيراد الـ Hook المخصص
+import usePost from "@/hooks/usePost"; 
 
 const CategoryAdd = () => {
   const navigate = useNavigate();
   const [parentOptions, setParentOptions] = useState([]);
+  const [fetchingParents, setFetchingParents] = useState(true); // ⭐️ حالة تحميل لجلب الفئات
+
+  // ⭐️ استخدام usePost: تحديد المسار وجلب postData وحالة التحميل loading
+  const { postData, loading: submitting } = usePost("/api/admin/category/");
 
   useEffect(() => {
     const fetchParentCategories = async () => {
+      setFetchingParents(true);
       try {
         const res = await api.get("/api/admin/category");
-        const parents = res.data?.data?.ParentCategories || [];
+        // يجب الانتباه إلى أن الـ API قد يعيد البيانات في res.data.data
+        const parents = res.data?.data?.ParentCategories || []; 
         setParentOptions(
           parents.map((cat) => ({
             value: cat._id, // يتبعت للباك
@@ -21,29 +29,45 @@ const CategoryAdd = () => {
           }))
         );
       } catch (err) {
-        toast.error("Failed to load parent categories",err);
+        toast.error("Failed to load parent categories");
+        console.error("Error fetching parent categories:", err);
+      } finally {
+        setFetchingParents(false);
       }
     };
     fetchParentCategories();
   }, []);
 
-  const fields = [
-    { key: "name", label: "Name", required: true },
-    { key: "image", label: "Image", type: "image", required: true },
-    {
+  // ⭐️ استخدام useMemo لتعريف الحقول بناءً على حالة تحميل الفئات
+  const fields = useMemo(() => {
+    // إذا كنا ما زلنا نحمّل الفئات، نعرض حقل Parent Category معطل
+    const parentCategoryField = {
       key: "parentId",
       label: "Parent Category",
       type: "select",
       options: parentOptions,
-    },
-  ];
+      disabled: fetchingParents, // تعطيل حتى يتم تحميل البيانات
+      placeholder: fetchingParents ? "Loading categories..." : "Select parent category (optional)",
+    };
+
+    return [
+      { key: "name", label: "Name", required: true },
+      { key: "image", label: "Image", type: "image", required: true },
+      // إضافة حقل الحالة كـ switch
+      { key: "status", label: "Is Active", type: "switch", initialValue: true },
+      parentCategoryField,
+    ];
+  }, [parentOptions, fetchingParents]); // يعتمد على البيانات وحالة التحميل
 
   const handleSubmit = async (data) => {
     try {
-      await api.post("/api/admin/category/", data);
-      toast.success("Category added successfully!");
+      // ⭐️ استخدام postData بدلاً من api.post
+      await postData(data); 
+      
+      toast.success("Category added successfully! 🎉");
       navigate("/category");
     } catch (err) {
+      // ✅ التعامل مع الأخطاء (استخدام نفس منطق عرض الأخطاء المفصل)
       const errorMessage =
         err.response?.data?.error?.message ||
         err.response?.data?.message ||
@@ -67,7 +91,9 @@ const CategoryAdd = () => {
         fields={fields}
         onSubmit={handleSubmit}
         onCancel={() => navigate("/category")}
-        initialData={{ status: true }}
+        // ⭐️ دمج حالة التحميل: الإرسال أو جلب الفئات
+        loading={submitting || fetchingParents} 
+        initialData={{ status: true, parentId: "" }}
       />
     </div>
   );

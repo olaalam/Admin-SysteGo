@@ -1,8 +1,9 @@
-// src/pages/brandAdd.jsx
+// src/pages/brandAdd.jsx (النسخة النهائية باستخدام usePost)
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import AddPage from "@/components/AddPage";
-import api from "@/api/api";
+// ⭐️ استيراد الـ Hook المخصص
+import usePost from "@/hooks/usePost"; 
 import { toast } from "react-toastify";
 
 const BrandAdd = () => {
@@ -10,16 +11,23 @@ const BrandAdd = () => {
 
   const fields = [
     { key: "name", label: "Name", required: true },
-    { key: "logo", label: "Logo", type: "image", required: true }, // ✅ غيرنا النوع لـ image
+    { key: "logo", label: "Logo", type: "image", required: true },
+    // يمكن إضافة حقل الحالة لتفعيل/تعطيل العلامة التجارية عند الإضافة
+    { key: "status", label: "Is Active", type: "switch", required: false }, 
   ];
+
+  // ⭐️ استخدام usePost: تحديد المسار وجلب postData وحالة التحميل loading
+  const { postData, loading } = usePost("/api/admin/brand/");
 
   const handleSubmit = async (data) => {
     try {
-      await api.post("/api/admin/brand/", data);
-      toast.success("Brand added successfully!");
+      // ⭐️ استخدام postData بدلاً من api.post
+      await postData(data);
+      
+      toast.success("Brand added successfully! 🎉");
       navigate("/brand");
     } catch (err) {
-      // ✅ عرض الأخطاء من الـ API
+      // ✅ التعامل مع الأخطاء (يمكن ترك هذا الجزء داخل المكون أو نقله للـ Hook حسب التصميم)
       const errorMessage = 
         err.response?.data?.error?.message || 
         err.response?.data?.message || 
@@ -45,7 +53,10 @@ const BrandAdd = () => {
         fields={fields}
         onSubmit={handleSubmit}
         onCancel={() => navigate("/brand")}
-        initialData={{ status: true }}
+        // ⭐️ استخدام حالة التحميل من الـ Hook
+        loading={loading}
+        // إضافة logo كقيمة أولية فارغة إذا كان مطلوبًا في الفورم
+        initialData={{ name: "", logo: "", status: true }} 
       />
     </div>
   );

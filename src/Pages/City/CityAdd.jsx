@@ -1,16 +1,25 @@
-import React, { useEffect, useState } from "react";
+// src/pages/CityAdd.jsx (النسخة النهائية باستخدام usePost)
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AddPage from "@/components/AddPage";
 import api from "@/api/api";
 import { toast } from "react-toastify";
+// ⭐️ استيراد الـ Hook المخصص
+import usePost from "@/hooks/usePost"; 
+import Loader from "@/components/Loader"; // نحتاج Loader إذا أردنا إظهار التحميل قبل ظهور الفورم
 
 const CityAdd = () => {
   const navigate = useNavigate();
   const [countries, setCountries] = useState([]);
+  const [fetchingCountries, setFetchingCountries] = useState(true); // ⭐️ حالة تحميل لجلب الدول
+
+  // ⭐️ استخدام usePost: تحديد المسار وجلب postData وحالة التحميل loading
+  const { postData, loading: submitting } = usePost("/api/admin/city");
 
   // جلب الدول من API
   useEffect(() => {
     const fetchCountries = async () => {
+      setFetchingCountries(true);
       try {
         const response = await api.get("/api/admin/city");
         const countryList = response.data?.data?.countries || [];
@@ -18,34 +27,51 @@ const CityAdd = () => {
       } catch (err) {
         toast.error("Failed to load countries");
         console.error("Error fetching countries:", err);
+      } finally {
+        setFetchingCountries(false);
       }
     };
 
     fetchCountries();
   }, []);
 
-  // إعداد الـ fields
-  const fields = [
-    { key: "name", label: "Name", required: true },
-    {
-      key: "country",
-      label: "Country",
-      type: "select",
-      required: true,
-      options: countries.map((country) => ({
-        label: country.name,
-        value: country._id,
-      })),
-    },
-  ];
+  // ⭐️ استخدام useMemo لتعريف الحقول بناءً على حالة تحميل الدول
+  const fields = useMemo(() => {
+    const countryOptions = countries.map((country) => ({
+      label: country.name,
+      value: country._id,
+    }));
+    
+    return [
+      { key: "name", label: "Name", required: true },
+      {
+        key: "countryId", // ⭐️ تغيير key إلى countryId ليتوافق مع متطلبات الـ API الشائعة
+        label: "Country",
+        type: "select",
+        required: true,
+        options: countryOptions,
+        disabled: fetchingCountries, // تعطيل حتى يتم تحميل البيانات
+        placeholder: fetchingCountries ? "Loading countries..." : "Select country",
+      },
+    ];
+  }, [countries, fetchingCountries]);
 
   // الإرسال
   const handleSubmit = async (data) => {
     try {
-      await api.post("/api/admin/city", data); // ← تأكد إن الباكند بياخد countryId
-      toast.success("City added successfully!");
+      // ⭐️ التأكد من أن payload يحوي countryId وليس country
+      const payload = {
+        name: data.name,
+        countryId: data.countryId, // نستخدم countryId بدلاً من country في الـ key
+      };
+
+      // ⭐️ استخدام postData بدلاً من api.post
+      await postData(payload); 
+
+      toast.success("City added successfully! 🎉");
       navigate("/city");
     } catch (err) {
+      // ✅ التعامل مع الأخطاء (استخدام نفس منطق عرض الأخطاء المفصل)
       const errorMessage =
         err.response?.data?.error?.message ||
         err.response?.data?.message ||
@@ -63,6 +89,11 @@ const CityAdd = () => {
     }
   };
 
+  // إذا كنا نحمّل الدول، يمكن عرض Loader بدلاً من الفورم
+  // if (fetchingCountries && countries.length === 0) {
+  //    return <Loader />;
+  // }
+
   return (
     <div className="p-6">
       <AddPage
@@ -71,7 +102,9 @@ const CityAdd = () => {
         fields={fields}
         onSubmit={handleSubmit}
         onCancel={() => navigate("/city")}
-        initialData={{}}
+        // ⭐️ دمج حالة التحميل: الإرسال أو جلب الدول
+        loading={submitting || fetchingCountries} 
+        initialData={{ name: "", countryId: "" }}
       />
     </div>
   );

@@ -1,11 +1,12 @@
-// src/pages/VariationAdd.jsx
+// src/pages/VariationAdd.jsx (النسخة النهائية والمحسّنة)
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import AddPage from "@/components/AddPage";
-import usePost from "@/hooks/usePost"; // ✅ بنستخدم usePost
+import usePost from "@/hooks/usePost"; // ✅ يتم استخدام usePost بشكل صحيح
 import { toast } from "react-toastify";
 
-const AttributeAdd = () => {
+// ⭐️ تم تغيير اسم المكون ليعكس اسم الملف (VariationAdd)
+const VariationAdd = () => {
   const navigate = useNavigate();
 
   // الحقول المطلوبة
@@ -14,34 +15,40 @@ const AttributeAdd = () => {
     {
       key: "options",
       label: "Options",
-      type: "array", // ✅ Array input
+      type: "array", // Array input
       subFields: [
         { key: "name", label: "Option Name", required: true },
-        { key: "status", label: "Status", type: "checkbox" },
+        // ✅ تغيير type: "checkbox" إلى "switch" ليكون أكثر حداثة
+        { key: "status", label: "Status", type: "switch", initialValue: true }, 
       ],
     },
   ];
 
+  // ✅ استخدام Hook: جلب الدالة postData وحالة التحميل loading
   const { postData, loading } = usePost("/api/admin/variation");
 
   const handleSubmit = async (data) => {
     try {
-      // ✅ نظبط الـ payload زي ما الـ backend عاوز
+      // تجهيز الـ payload ليناسب متطلبات الـ backend
       const payload = {
         name: data.name,
+        // ✅ التأكد من تعيين قيمة status كـ boolean (true/false)
         options: (data.options || []).map((opt) => ({
           name: opt.name,
-          status: opt.status ?? false,
+          status: opt.status ?? false, 
         })),
       };
 
       console.log("🚀 Sending payload:", payload);
 
-      await postData(payload);
+      // ⭐️ يتم إرسال البيانات وإدارة التحميل والأخطاء بواسطة Hook usePost
+      await postData(payload); 
 
-      toast.success("Variation added successfully!");
-      navigate("/attribute");
+      toast.success("Variation added successfully! 🎉");
+      // ✅ تعديل مسار التنقل ليكون مطابقًا لـ Variations (افتراضًا)
+      navigate("/variations"); 
     } catch (err) {
+      // ✅ التعامل مع الأخطاء كما هو معتاد (يُفترض أن usePost يعيد الخطأ بعد معالجته)
       const errorMessage =
         err.response?.data?.error?.message ||
         err.response?.data?.message ||
@@ -65,11 +72,14 @@ const AttributeAdd = () => {
         description="Fill variation name and options"
         fields={fields}
         onSubmit={handleSubmit}
-        onCancel={() => navigate("/attribute")}
+        // ✅ تعديل مسار الإلغاء ليكون مطابقًا لـ Variations (افتراضًا)
+        onCancel={() => navigate("/variations")}
+        // ✅ استخدام حالة التحميل من الـ Hook
         loading={loading}
       />
     </div>
   );
 };
 
-export default AttributeAdd;
+// ⭐️ تم تغيير اسم التصدير ليتطابق مع اسم المكون الجديد
+export default VariationAdd;
