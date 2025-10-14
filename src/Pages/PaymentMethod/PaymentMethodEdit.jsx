@@ -60,7 +60,7 @@ export default function PaymentMethodEdit() {
       // putData يتوقع formData تحتوي على المفاتيح الجديدة (icon, discription, isActive)
       await putData(formData);
       toast.success("Payment method updated successfully!");
-      navigate("/payment-method");
+      navigate("/payment_method");
     } catch (err) {
       // عرض الأخطاء من الـ API
       const errorMessage =
@@ -80,7 +80,7 @@ export default function PaymentMethodEdit() {
     }
   };
 
-  const handleCancel = () => navigate("/payment-method");
+  const handleCancel = () => navigate("/payment_method");
 
   if (fetching) {
     return <Loader />;

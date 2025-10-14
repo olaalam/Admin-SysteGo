@@ -1,36 +1,31 @@
-// src/pages/adminAdd.jsx (النسخة النهائية والمحسّنة)
 import React, { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AddPage from "@/components/AddPage";
 import api from "@/api/api";
 import { toast } from "react-toastify";
-// ⭐️ افتراض: استخدام Hook مخصص للـ POST لتبسيط إدارة التحميل
-import { usePost } from "@/hooks/usePost"; // افتراض وجود هذا الـ Hook
+import usePost from "@/hooks/usePost";
 
 const AdminAdd = () => {
   const navigate = useNavigate();
 
   const [positions, setPositions] = useState([]);
-  const [selectedPositionId, setSelectedPositionId] = useState("");
-  const [selectedRoles, setSelectedRoles] = useState([]); // لعرض الـ actions
+  const [selectedPosition, setSelectedPosition] = useState(null); // This will hold the entire position object
   const [fetchingPositions, setFetchingPositions] = useState(true);
 
-  // ⭐️ استخدام usePost بدلاً من إدارة setLoading يدوياً
   const { postData, loading: submitting } = usePost("/api/admin/admin/");
 
-  // جلب بيانات الـ Positions
+  // 🟢 جلب بيانات الـ Positions
   useEffect(() => {
     const fetchPositions = async () => {
       setFetchingPositions(true);
       try {
         const res = await api.get("/api/admin/admin");
-        // يجب الانتباه إلى أن الـ API قد يعيد البيانات في res.data.data
-        const fetchedPositions = res.data?.data?.positions || []; 
+        const fetchedPositions = res.data?.data?.positions || [];
         setPositions(fetchedPositions);
 
-        // تعيين أول Position كقيمة افتراضية
         if (fetchedPositions.length > 0) {
-          setSelectedPositionId(fetchedPositions[0]._id);
+          // 🟡 تحديد أول موقع كافتراضي
+          setSelectedPosition(fetchedPositions[0]);
         }
       } catch (err) {
         toast.error("Failed to fetch positions");
@@ -43,30 +38,25 @@ const AdminAdd = () => {
     fetchPositions();
   }, []);
 
-  // الحقول التي ستظهر في الفورم
+  // 🟡 الحقول التي ستظهر في الفورم
   const fields = useMemo(() => {
-    // إذا لم يتم جلب الـ Positions بعد، نعرض رسالة تحميل أو حقل معطل
     if (fetchingPositions) {
       return [
         { key: "username", label: "Name", required: true, disabled: true },
-        // ... (باقي الحقول)
         { key: "loading", label: "Loading Positions...", type: "text", disabled: true },
       ];
     }
-    
+
+    // ⭐ التعديل رقم 1: استخدام الـ _id كـ value
     const positionOptions = positions.map((position) => ({
       label: position.name,
-      value: position._id,
+      value: position._id, // ⭐ تم التغيير من position.name إلى position._id
     }));
 
-    const selectedPosition = positions.find((p) => p._id === selectedPositionId);
-    const roles = selectedPosition?.roles || [];
-
-    const roleOptions = roles.map((role) => ({
-      label: role.name,
-      value: role._id,
-      actions: role.actions,
-    }));
+    const roleOptions = [
+      { label: "Admin", value: "admin" },
+      { label: "Super Admin", value: "superadmin" },
+    ];
 
     return [
       { key: "username", label: "Name", required: true },
@@ -80,52 +70,46 @@ const AdminAdd = () => {
         type: "select",
         required: true,
         options: positionOptions,
-        // ربط القيمة الحالية بالـ Select (مهم جداً)
-        value: selectedPositionId,
+        // ⭐ عرض القيمة الافتراضية باستخدام الـ _id
+        value: selectedPosition?._id || "", 
+        // ⭐ التعديل رقم 2: البحث عن الـ position باستخدام الـ id
         onChange: (value) => {
-          setSelectedPositionId(value);
-          setSelectedRoles([]); // Reset roles when position changes
+          // 'value' هنا هي الـ _id للموقع المختار
+          const found = positions.find((p) => p._id === value); 
+          setSelectedPosition(found || null);
         },
       },
       {
         key: "role",
-        label: "Roles",
-        // إذا لم يكن هناك أدوار متاحة، عرض حقل نصي أو تعريفي
-        type: roleOptions.length > 0 ? "multiselect" : "text",
-        required: roleOptions.length > 0,
+        label: "Role",
+        type: "select",
+        required: true,
         options: roleOptions,
-        onChange: (values) => {
-          const roleValues = Array.isArray(values) ? values : [values].filter(Boolean);
-          const selected = roleOptions.filter((r) => roleValues.includes(r.value));
-          setSelectedRoles(selected);
-        },
       },
-    ].filter(field => field.key !== 'loading'); // التأكد من إزالة حقل التحميل بعد الانتهاء
-  }, [positions, selectedPositionId, fetchingPositions]);
+    ].filter((field) => field.key !== "loading");
+  }, [positions, selectedPosition, fetchingPositions]);
 
-  // عند الضغط على Submit
+  // 🟣 عند الضغط على Submit
   const handleSubmit = async (data) => {
     try {
+      // ⭐ التعديل رقم 3: التأكد من إرسال الـ _id للـ position
       const payload = {
         ...data,
-        // التأكد من استخدام القيمة الصحيحة للـ positionId
-        positionId: data.positionId || selectedPositionId, 
-        // التأكد من أن حقل role موجود ومصفوفة، وإلا يتم تعيينه كمصفوفة فارغة لتجنب الأخطاء
-        role: Array.isArray(data.role) ? data.role : (data.role ? [data.role] : []),
+        // نستخدم data.positionId مباشرة لأنه يحتوي على الـ _id الآن
+        positionId: data.positionId || selectedPosition?._id, 
+        role: data.role,
       };
 
-      // ⭐️ استخدام Hook: postData هو المسؤول عن تعيين حالة التحميل
-      await postData(payload); 
-      
+      await postData(payload);
+
       toast.success("Admin added successfully! 🎉");
       navigate("/admin");
     } catch (err) {
-      // ✅ عرض الأخطاء من الـ API (تم تبسيطها قليلاً)
       const errorMessage =
         err.response?.data?.error?.message ||
         err.response?.data?.message ||
         "Failed to add admin";
-      
+
       toast.error(errorMessage);
       console.error("❌ Error:", err.response?.data);
     }
@@ -134,38 +118,19 @@ const AdminAdd = () => {
   return (
     <div className="p-6">
       <AddPage
-        // إضافة Key ديناميكي لإجبار المكون على إعادة الرسم وتحديث حقوله
-        key={selectedPositionId} 
+        key={selectedPosition?._id || "no-pos"}
         title="Add admin"
         description="Fill in the details for the new administrator."
         fields={fields}
         onSubmit={handleSubmit}
         onCancel={() => navigate("/admin")}
-        // ⭐️ استخدام حالة التحميل من usePost
-        loading={submitting || fetchingPositions} 
-        // القيمة الافتراضية للـ positionId يجب أن تكون هي الـ selectedPositionId بعد الجلب
-        initialData={{ 
-            positionId: selectedPositionId, 
-            status: true 
+        loading={submitting || fetchingPositions}
+        initialData={{
+          // ⭐ القيمة الأولية يجب أن تكون الـ _id
+          positionId: selectedPosition?._id || "", 
+          status: true,
         }}
       />
-
-      {/* عرض الـ Actions بعد اختيار الـ Roles */}
-      {selectedRoles.length > 0 && (
-        <div className="mt-6 bg-gray-50 p-4 rounded-md border">
-          <h3 className="text-lg font-semibold mb-2">Role Actions:</h3>
-          <ul className="list-disc pl-5">
-            {selectedRoles.map((role) => (
-              <li key={role.value} className="mb-1 text-sm text-gray-700">
-                <span className="font-medium text-bg-primary">{role.label}</span>:{" "}
-                {role.actions && role.actions.length > 0
-                  ? role.actions.join(", ")
-                  : "No actions defined"}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
     </div>
   );
 };

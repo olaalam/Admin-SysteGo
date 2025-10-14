@@ -1,10 +1,10 @@
 // src/pages/BankAccountAdd.jsx (النسخة النهائية باستخدام usePost)
-import React, { useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import AddPage from "@/components/AddPage";
 import { toast } from "react-toastify";
 // ⭐️ افتراض: استخدام Hook مخصص للـ POST لتبسيط إدارة التحميل
-import { usePost } from "@/hooks/usePost"; // يجب توفر هذا الـ Hook في مسارك
+import  usePost  from "@/hooks/usePost"; // يجب توفر هذا الـ Hook في مسارك
 
 const BankAccountAdd = () => {
   const navigate = useNavigate();
