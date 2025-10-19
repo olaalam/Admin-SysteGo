@@ -22,7 +22,7 @@ export default function usePost(defaultUrl = "") {
       const res = await api.post(url, body, config);
 
       if (res.data?.success) {
-        toast.success(res.data?.message || "Success!", {
+        console.log(res.data?.message || "Success!", {
           position: "top-right",
           autoClose: 3000,
         });

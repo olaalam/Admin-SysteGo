@@ -43,7 +43,12 @@ const AdminAdd = () => {
     if (fetchingPositions) {
       return [
         { key: "username", label: "Name", required: true, disabled: true },
-        { key: "loading", label: "Loading Positions...", type: "text", disabled: true },
+        {
+          key: "loading",
+          label: "Loading Positions...",
+          type: "text",
+          disabled: true,
+        },
       ];
     }
 
@@ -71,11 +76,11 @@ const AdminAdd = () => {
         required: true,
         options: positionOptions,
         // ⭐ عرض القيمة الافتراضية باستخدام الـ _id
-        value: selectedPosition?._id || "", 
+        value: selectedPosition?._id || "",
         // ⭐ التعديل رقم 2: البحث عن الـ position باستخدام الـ id
         onChange: (value) => {
           // 'value' هنا هي الـ _id للموقع المختار
-          const found = positions.find((p) => p._id === value); 
+          const found = positions.find((p) => p._id === value);
           setSelectedPosition(found || null);
         },
       },
@@ -87,7 +92,7 @@ const AdminAdd = () => {
         options: roleOptions,
       },
     ].filter((field) => field.key !== "loading");
-  }, [positions, selectedPosition, fetchingPositions]);
+  }, [positions, fetchingPositions]);
 
   // 🟣 عند الضغط على Submit
   const handleSubmit = async (data) => {
@@ -96,7 +101,7 @@ const AdminAdd = () => {
       const payload = {
         ...data,
         // نستخدم data.positionId مباشرة لأنه يحتوي على الـ _id الآن
-        positionId: data.positionId || selectedPosition?._id, 
+        positionId: data.positionId || selectedPosition?._id,
         role: data.role,
       };
 
@@ -118,7 +123,7 @@ const AdminAdd = () => {
   return (
     <div className="p-6">
       <AddPage
-        key={selectedPosition?._id || "no-pos"}
+        key="admin-add"
         title="Add admin"
         description="Fill in the details for the new administrator."
         fields={fields}
@@ -127,7 +132,7 @@ const AdminAdd = () => {
         loading={submitting || fetchingPositions}
         initialData={{
           // ⭐ القيمة الأولية يجب أن تكون الـ _id
-          positionId: selectedPosition?._id || "", 
+          positionId: selectedPosition?._id || "",
           status: true,
         }}
       />
