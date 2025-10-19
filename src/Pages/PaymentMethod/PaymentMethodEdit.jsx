@@ -21,8 +21,17 @@ export default function PaymentMethodEdit() {
   const fields = useMemo(() => [
     { key: "name", label: "Name", required: true },
     { key: "discription", label: "Description", required: false }, // تغيير إلى discription
-    { key: "icon", label: "Icon / Logo", type: "image", required: true }, // تغيير إلى icon
-    // { key: "isActive", label: "Is Active", type: "switch", required: false }, // تغيير إلى isActive
+    { key: "icon", label: "Icon / Logo", type: "image", required: true }, 
+          {
+        key: "type",
+        label: "Payment Type",
+        type: "select",
+        required: true,
+        options: [
+          { value: "manual", label: "Manual" },
+          { value: "automatic", label: "Automatic" },
+        ],
+      },
   ], []);
 
   useEffect(() => {
@@ -42,7 +51,7 @@ export default function PaymentMethodEdit() {
           name: paymentMethod.name || "",
           discription: paymentMethod.discription || "", // استخدام discription
           icon: paymentMethod.icon || "", // استخدام icon
-          // isActive: paymentMethod.isActive || false, // استخدام isActive
+           type: paymentMethod.type || "manual",
         });
       } catch (err) {
         toast.error("Failed to fetch payment method data");

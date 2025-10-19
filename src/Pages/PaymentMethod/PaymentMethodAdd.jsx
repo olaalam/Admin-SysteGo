@@ -12,6 +12,16 @@ const PaymentMethodAdd = () => {
     { key: "name", label: "Name", required: true },
     { key: "discription", label: "Description", required: false },
     { key: "icon", label: "Icon / Logo", type: "image", required: true },
+          {
+        key: "type",
+        label: "Payment Type",
+        type: "select",
+        required: true,
+        options: [
+          { value: "manual", label: "Manual" },
+          { value: "automatic", label: "Automatic" },
+        ],
+      },
   ];
 
   const handleSubmit = async (data) => {
