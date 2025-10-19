@@ -111,34 +111,32 @@ const ProductPriceTab = ({
     <div className="space-y-6">
       {/* Unit Price (تم الإبقاء عليها لأنها سعر المنتج الأساسي) */}
 
-
-
       {/* low_stock and Quantity of the base product (if not variant) */}
       <div className="grid grid-cols-2 gap-4">
-              <div>
-        <Label className="text-sm font-medium text-gray-700 mb-2 block">
-          Unit Price (EGP) <span className="text-red-500">*</span>
-        </Label>
-        <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
-            EGP
-          </span>
-          <Input
-            type="number"
-            value={form.price}
-            onChange={(e) =>
-              handleChange("price", parseFloat(e.target.value) || 0)
-            }
-            placeholder="0.00"
-            className="h-11 pl-14"
-            step="0.01"
-            min="0"
-          />
-        </div>
-      </div>
         <div>
           <Label className="text-sm font-medium text-gray-700 mb-2 block">
-            low_stock 
+            Unit Price (EGP) <span className="text-red-500">*</span>
+          </Label>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+              EGP
+            </span>
+            <Input
+              type="number"
+              value={form.price}
+              onChange={(e) =>
+                handleChange("price", parseFloat(e.target.value) || 0)
+              }
+              placeholder="0.00"
+              className="h-11 pl-14"
+              step="0.01"
+              min="0"
+            />
+          </div>
+        </div>
+        <div>
+          <Label className="text-sm font-medium text-gray-700 mb-2 block">
+            low_stock
           </Label>
           <Input
             type="number"
@@ -204,7 +202,7 @@ const ProductPriceTab = ({
                 </button>
 
                 {showVariationDropdown && (
-                  <div className="absolute z-10 w-full mt-2 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  <div className="absolute z-10 w-full mt-2 mb-4 bg-white border border-gray-300 rounded-lg shadow-lg max-h-96 overflow-y-auto">
                     {uniqueVariations.map((variation) => (
                       <label
                         key={variation._id}
@@ -321,163 +319,148 @@ const ProductPriceTab = ({
           </div>
 
           {/* Variants Table */}
-          {form.prices.length > 0 && (
-            <div className="mt-6">
-              <div className="border border-gray-200 rounded-lg overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-gray-50 border-b border-gray-200">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                          Variant
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                          Price (EGP)
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                          Code
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                          quantity
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                          Photo
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {form.prices.map((variant, index) => (
-                        <tr
-                          key={
-                            variant.id || variant.code || variant.name || index
+{form.prices.length > 0 && (
+  <div className="mt-6">
+    <div className="border border-gray-200 rounded-lg overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead className="bg-gray-50 border-b border-gray-200">
+            <tr>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                Variant
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                Price (EGP)
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                Code
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                quantity
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                Photo
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {form.prices.map((variant, index) => (
+              <tr
+                key={variant._id || variant.code || index} // Use _id or index for unique key
+                className="hover:bg-gray-50"
+              >
+                <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                  {variant.name || "Unnamed Variant"} {/* Display the name field */}
+                </td>
+                <td className="px-4 py-3">
+                  <Input
+                    type="number"
+                    value={variant.price || 0}
+                    onChange={(e) =>
+                      handleVariantFieldChange(
+                        index,
+                        "price",
+                        parseFloat(e.target.value) || 0
+                      )
+                    }
+                    className="h-9 w-32"
+                    step="0.01"
+                    min="0"
+                  />
+                </td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="text"
+                      value={variant.code || ""}
+                      onChange={(e) =>
+                        handleVariantFieldChange(index, "code", e.target.value)
+                      }
+                      className="h-9 w-40"
+                      placeholder="code"
+                    />
+                    {/* زر التوليد (Generate) */}
+                    <button
+                      type="button"
+                      onClick={() => generateVariantCode(index)}
+                      className="h-9 w-9 flex items-center justify-center text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
+                      title="Generate Code"
+                    >
+                      <RotateCw className="h-4 w-4" />
+                    </button>
+                    {/* زر النسخ (Copy) */}
+                    <button
+                      type="button"
+                      onClick={() => copyVariantCode(variant.code)}
+                      className="h-9 w-9 flex items-center justify-center text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
+                      title="Copy Code"
+                      disabled={!variant.code}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </button>
+                  </div>
+                </td>
+                <td className="px-4 py-3">
+                  <Input
+                    type="number"
+                    value={variant.quantity || 0}
+                    onChange={(e) =>
+                      handleVariantFieldChange(
+                        index,
+                        "quantity",
+                        parseInt(e.target.value) || 0
+                      )
+                    }
+                    className="h-9 w-24"
+                    min="0"
+                  />
+                </td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    {variant.image ? (
+                      <div className="relative w-12 h-12 rounded border border-gray-200 overflow-hidden">
+                        <img
+                          src={variant.image}
+                          alt={variant.name}
+                          className="w-full h-full object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleVariantFieldChange(index, "image", "")
                           }
-                          className="hover:bg-gray-50"
+                          className="absolute top-0 right-0 bg-red-500 text-white p-0.5 rounded-bl"
                         >
-                          <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                            {variant.name}
-                          </td>
-                          <td className="px-4 py-3">
-                            <Input
-                              type="number"
-                              value={variant.price || 0}
-                              onChange={(e) =>
-                                handleVariantFieldChange(
-                                  index,
-                                  "price",
-                                  parseFloat(e.target.value) || 0
-                                )
-                              }
-                              className="h-9 w-32"
-                              step="0.01"
-                              min="0"
-                            />
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-2">
-                              <Input
-                                type="text"
-                                value={variant.code || ""}
-                                onChange={(e) =>
-                                  handleVariantFieldChange(
-                                    index,
-                                    "code",
-                                    e.target.value
-                                  )
-                                }
-                                className="h-9 w-40"
-                                placeholder="code"
-                              />
-                              {/* زر التوليد (Generate) */}
-                              <button
-                                type="button"
-                                onClick={() => generateVariantCode(index)}
-                                className="h-9 w-9 flex items-center justify-center text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
-                                title="Generate Code"
-                              >
-                                <RotateCw className="h-4 w-4" />
-                              </button>
-                              {/* زر النسخ (Copy) */}
-                              <button
-                                type="button"
-                                onClick={() => copyVariantCode(variant.code)}
-                                className="h-9 w-9 flex items-center justify-center text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
-                                title="Copy Code"
-                                disabled={!variant.code}
-                              >
-                                <Copy className="h-4 w-4" />
-                              </button>
-                            </div>
-                          </td>
-<td className="px-4 py-3">
-  <Input
-    type="number"
-    value={variant.quantity || 0}
-    onChange={(e) =>
-      handleVariantFieldChange(
-        index,
-        "quantity",
-        parseInt(e.target.value) || 0
-      )
-    }
-    className="h-9 w-24"
-    min="0"
-  />
-</td>
-
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-2">
-                              {variant.image ? (
-                                <div className="relative w-12 h-12 rounded border border-gray-200 overflow-hidden">
-                                  <img
-                                    src={variant.image}
-                                    alt={variant.name}
-                                    className="w-full h-full object-cover"
-                                  />
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      handleVariantFieldChange(
-                                        index,
-                                        "image",
-                                        ""
-                                      )
-                                    }
-                                    className="absolute top-0 right-0 bg-red-500 text-white p-0.5 rounded-bl"
-                                  >
-                                    <X className="h-3 w-3" />
-                                  </button>
-                                </div>
-                              ) : (
-                                <label className="cursor-pointer">
-                                  <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded border border-gray-300 transition-colors">
-                                    <Upload className="h-4 w-4 text-gray-600" />
-                                    <span className="text-xs text-gray-700">
-                                      Upload
-                                    </span>
-                                  </div>
-                                  <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={(e) =>
-                                      handleVariantImageUpload(index, e)
-                                    }
-                                    className="hidden"
-                                  />
-                                </label>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-              <p className="text-sm text-gray-600 mt-2">
-                {form.prices.length} variant(s) generated
-              </p>
-            </div>
-          )}
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="cursor-pointer">
+                        <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded border border-gray-300 transition-colors">
+                          <Upload className="h-4 w-4 text-gray-600" />
+                          <span className="text-xs text-gray-700">Upload</span>
+                        </div>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleVariantImageUpload(index, e)}
+                          className="hidden"
+                        />
+                      </label>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <p className="text-sm text-gray-600 mt-2">
+      {form.prices.length} variant(s) generated
+    </p>
+  </div>
+)}
 
           {/* Message when no variants generated */}
           {form.prices.length === 0 && selectedVariationIds.length > 0 && (

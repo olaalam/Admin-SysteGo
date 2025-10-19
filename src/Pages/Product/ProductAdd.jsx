@@ -1,4 +1,4 @@
-// src/pages/ProductAdd.jsx (النسخة النهائية والمحسّنة)
+// src/pages/ProductAdd.jsx (النسخة النهائية بعد تصحيح الـ boolean)
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import usePost from "@/hooks/usePost";
@@ -6,39 +6,59 @@ import ProductForm from "./ProductForm";
 
 const ProductAdd = () => {
   const navigate = useNavigate();
+
   // ✅ استخدام usePost لإدارة الإرسال والتحميل
   const { postData, loading } = usePost("/api/admin/product");
 
+  // ----------------------------------------------------------------------
+  // ✅ handleAdd — ترسل البيانات للـ API وتتعامل مع الأخطاء
+  // ----------------------------------------------------------------------
   const handleAdd = async (data) => {
     try {
-      // ✅ استدعاء postData لإرسال البيانات
-      await postData(data);
+      // ✅ تجهيز الـ payload بدون أي تحويل للقيم المنطقية
+      const payload = {
+        ...data,
+        exp_ability: !!data.exp_ability,        // تأكيد أنها boolean
+        product_has_imei: !!data.product_has_imei,
+        show_quantity: !!data.show_quantity,
+        is_featured: !!data.is_featured,
+      };
+
+      console.log("📦 Payload sent to backend:", payload);
+
+      // ✅ إرسال البيانات للـ API
+      await postData(payload);
+
       toast.success("✅ Product added successfully! 🎉");
       navigate("/product");
     } catch (err) {
-      // ⭐️ التعديل: التعامل مع الأخطاء التفصيلية من الـ API (مطابقة لـ AdminAdd.jsx)
+      // ⭐️ التعامل مع الأخطاء التفصيلية من الـ API
       const errorMessage =
         err.response?.data?.error?.message ||
         err.response?.data?.message ||
-        "❌ Failed to add product"; // رسالة خطأ عامة كاحتياط
+        "❌ Failed to add product";
 
       const errorDetails = err.response?.data?.error?.details;
 
       if (errorDetails && Array.isArray(errorDetails)) {
-        // عرض كل خطأ تفصيلي بشكل منفصل
         errorDetails.forEach((detail) => toast.error(detail));
       } else {
-        // عرض رسالة الخطأ الرئيسية
         toast.error(errorMessage);
       }
-      
+
       console.error("❌ Error adding product:", err.response?.data || err);
     }
   };
 
+  // ----------------------------------------------------------------------
+  // ✅ عرض الفورم وتمرير حالة التحميل ووظيفة الإرسال
+  // ----------------------------------------------------------------------
   return (
-    // ✅ تمرير حالة التحميل loading من الـ Hook
-    <ProductForm mode="add" onSubmit={handleAdd} loading={loading} />
+    <ProductForm 
+      mode="add" 
+      onSubmit={handleAdd} 
+      loading={loading} 
+    />
   );
 };
 

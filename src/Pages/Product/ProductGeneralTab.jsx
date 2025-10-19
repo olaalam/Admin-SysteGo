@@ -273,6 +273,16 @@ const ProductGeneralTab = ({ form, handleChange, categories, brands, loading }) 
   />
   <label className="text-sm text-gray-700">Product has IMEI</label>
 </div>
+{/* ✅ Checkbox لوجود featued */}
+<div className="flex items-center space-x-2 mt-4">
+  <input
+    type="checkbox"
+    checked={form.is_featured}
+    onChange={(e) => handleChange("is_featured", e.target.checked)}
+  />
+  <label className="text-sm text-gray-700">Is Featured</label>
+</div>
+
 
 {/* ✅ Checkbox لعرض الكمية */}
 <div className="flex items-center space-x-2 mt-4">

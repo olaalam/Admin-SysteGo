@@ -18,11 +18,16 @@ import ProductPriceTab from "./ProductPriceTab";
  * - onSubmit: async function(finalForm) => should handle API call (POST/PUT) in parent
  * - submitLoading: optional boolean (parent can pass while waiting) - component also keeps local isSubmitting
  */
-const ProductForm = ({ mode = "add", initialData = {}, onSubmit, submitLoading = false }) => {
+const ProductForm = ({
+  mode = "add",
+  initialData = {},
+  onSubmit,
+  submitLoading = false,
+}) => {
   const navigate = useNavigate();
 
   // fetch categories / brands / variations (same endpoint used in original ProductAdd)
-  const { data, loading: metaLoading } = useGet("/api/admin/product");
+  const { data, loading: metaLoading } = useGet("/api/admin/product/select");
 
   // local states
   const [activeTab, setActiveTab] = useState("general");
@@ -45,7 +50,7 @@ const ProductForm = ({ mode = "add", initialData = {}, onSubmit, submitLoading =
     prices: [],
     discount: 0,
     quantity: 0,
-    stock: 0,
+    low_stock: 0,
     exp_ability: false,
     date_of_expiery: "",
     whole_price: 0,
@@ -53,6 +58,7 @@ const ProductForm = ({ mode = "add", initialData = {}, onSubmit, submitLoading =
     product_has_imei: false,
     show_quantity: false,
     maximum_to_show: 0,
+    is_featured: false,
   });
 
   const [selectedVariationIds, setSelectedVariationIds] = useState([]);
@@ -68,8 +74,12 @@ const ProductForm = ({ mode = "add", initialData = {}, onSubmit, submitLoading =
           variationId: id,
           variationName: variation ? variation.name : `ID ${id}`,
           options: options.map((optionName) => {
-            const originalVariation = allVariationsLocal.find((v) => v._id == id);
-            const originalOption = originalVariation?.options.find((opt) => opt.name === optionName);
+            const originalVariation = allVariationsLocal.find(
+              (v) => v._id == id
+            );
+            const originalOption = originalVariation?.options.find(
+              (opt) => opt.name === optionName
+            );
             return {
               name: optionName,
               id: originalOption?._id || `${id}-${optionName}`,
@@ -81,27 +91,32 @@ const ProductForm = ({ mode = "add", initialData = {}, onSubmit, submitLoading =
     if (activeOptions.length === 0) return [];
 
     const initialCombinations = [
-      ...activeOptions[0].options.map((option) => ({ name: option.name, options_ids: [option.id] })),
+      ...activeOptions[0].options.map((option) => ({
+        name: option.name,
+        options_ids: [option.id],
+      })),
     ];
 
-    const finalCombinations = activeOptions.slice(1).reduce((combinations, currentVariation) => {
-      const newCombinations = [];
-      currentVariation.options.forEach((option) => {
-        combinations.forEach((combo) => {
-          newCombinations.push({
-            name: `${combo.name} / ${option.name}`,
-            options_ids: [...combo.options_ids, option.id],
+    const finalCombinations = activeOptions
+      .slice(1)
+      .reduce((combinations, currentVariation) => {
+        const newCombinations = [];
+        currentVariation.options.forEach((option) => {
+          combinations.forEach((combo) => {
+            newCombinations.push({
+              name: `${combo.name} / ${option.name}`,
+              options_ids: [...combo.options_ids, option.id],
+            });
           });
         });
-      });
-      return newCombinations;
-    }, initialCombinations);
+        return newCombinations;
+      }, initialCombinations);
 
     return finalCombinations.map((combo) => ({
       name: combo.name,
       options: combo.options_ids,
       price: 0,
-      stock: 0,
+      low_stock: 0,
       code: "",
       image: "",
     }));
@@ -116,84 +131,115 @@ const ProductForm = ({ mode = "add", initialData = {}, onSubmit, submitLoading =
     }
   }, [data]);
 
-  // if edit mode and have initialData, populate form and selected options map
-  useEffect(() => {
-    if (mode === "edit" && initialData) {
-      // map product shape to form shape used here
-      setForm((prev) => ({
+useEffect(() => {
+  if (mode === "edit" && initialData) {
+    // Map product shape to form shape used here
+    setForm((prev) => {
+      const newForm = {
         ...prev,
         name: initialData.name || "",
-        categoryId: initialData.categoryId ? initialData.categoryId.map((c) => (c._id ? c._id : c)) : initialData.categoryId || [],
+        categoryId: initialData.categoryId
+          ? initialData.categoryId.map((c) => (c._id ? c._id : c))
+          : initialData.categoryId || [],
         brandId: initialData.brandId?._id || initialData.brandId || "",
         unit: initialData.unit || prev.unit,
         description: initialData.description || "",
         image: initialData.image || "",
         gallery_product: initialData.gallery_product || initialData.gallery || [],
-        minimum_quantity_sale: initialData.minimum_quantity_sale || prev.minimum_quantity_sale,
+        minimum_quantity_sale:
+          initialData.minimum_quantity_sale || prev.minimum_quantity_sale,
         price: initialData.price ?? prev.price,
         different_price: initialData.different_price ?? prev.different_price,
-        prices:
-          initialData.prices?.map((p) => {
-            // extract option IDs (supports earlier format)
-            const optionIds = [];
-            p.variations?.forEach((variation) => {
-              variation.options?.forEach((opt) => optionIds.push(opt._id));
-            });
-            // fallback if variant stored as options array
-            if (p.options && Array.isArray(p.options) && p.options.length) {
-              // assume options already IDs
-              // keep as-is
-            }
-            return {
-              _id: p._id,
-              price: p.price,
-              quantity: p.quantity || 0, code: p.code || "",
-              image: p.gallery?.[0] || p.image || "",
-              options: optionIds.length ? optionIds : p.options || [],
-              name: p.name || "",
-            };
-          }) || [],
+        prices: initialData.prices?.map((p) => {
+          // Extract option IDs (supports earlier format)
+          const optionIds = [];
+          p.variations?.forEach((variation) => {
+            variation.options?.forEach((opt) => optionIds.push(opt._id));
+          });
+          // Fallback if variant stored as options array
+          if (p.options && Array.isArray(p.options) && p.options.length) {
+            optionIds.push(...p.options);
+          }
+
+          // Map option IDs to their names using allVariations
+          const optionNames = optionIds
+            .map((optionId) => {
+              const variation = allVariations.find((v) =>
+                v.options.some((opt) => opt._id === optionId)
+              );
+              const option = variation?.options.find(
+                (opt) => opt._id === optionId
+              );
+              return option ? option.name : null; // Return null if not found
+            })
+            .filter((name) => name !== null); // Filter out null values
+
+          return {
+            _id: p._id,
+            price: p.price,
+            quantity: p.quantity || 0,
+            code: p.code || "",
+            image: p.gallery?.[0] || p.image || "",
+            options: optionIds.length ? optionIds : p.options || [],
+            name: optionNames.length ? optionNames.join(" / ") : p.name || "Unnamed Variant", // Fallback to "Unnamed Variant" if no names
+          };
+        }) || [],
         quantity: initialData.quantity || 0,
         low_stock: initialData.low_stock || 0,
         exp_ability: initialData.exp_ability || false,
-date_of_expiery: initialData.date_of_expiery
+        date_of_expiery: initialData.date_of_expiery
           ? new Date(initialData.date_of_expiery).toISOString().split("T")[0]
           : "",
-
         whole_price: initialData.whole_price || 0,
         start_quantaty: initialData.start_quantaty || 0,
         product_has_imei: initialData.product_has_imei || false,
         show_quantity: initialData.show_quantity || false,
         maximum_to_show: initialData.maximum_to_show || 0,
-      }));
+        is_featured: initialData.is_featured || false,
+      };
 
-      // prepare selectedOptionsMap & selectedVariationIds based on prices (if different_price)
-      if (initialData.different_price && initialData.prices?.length > 0 && data?.variations) {
-        const allOptionIds = new Set();
-        initialData.prices.forEach((p) => {
-          p.variations?.forEach((variation) => variation.options?.forEach((opt) => allOptionIds.add(opt._id)));
-          if (p.options && Array.isArray(p.options)) p.options.forEach((opt) => allOptionIds.add(opt));
-        });
+      // Debug log to verify prices
+      console.log("Initial prices:", newForm.prices);
+      return newForm;
+    });
 
-        const newSelected = {};
-        const newSelectedVarIds = [];
-        (data.variations || []).forEach((variation) => {
-          const selected = variation.options.filter((opt) => allOptionIds.has(opt._id)).map((opt) => opt.name);
-          if (selected.length) {
-            newSelected[variation._id] = selected;
-            newSelectedVarIds.push(variation._id);
-          }
-        });
+    // Prepare selectedOptionsMap & selectedVariationIds based on prices (if different_price)
+    if (
+      initialData.different_price &&
+      initialData.prices?.length > 0 &&
+      data?.variations
+    ) {
+      const allOptionIds = new Set();
+      initialData.prices.forEach((p) => {
+        p.variations?.forEach((variation) =>
+          variation.options?.forEach((opt) => allOptionIds.add(opt._id))
+        );
+        if (p.options && Array.isArray(p.options))
+          p.options.forEach((opt) => allOptionIds.add(opt));
+      });
 
-        setSelectedOptionsMap(newSelected);
-        setSelectedVariationIds(newSelectedVarIds);
-      }
+      const newSelected = {};
+      const newSelectedVarIds = [];
+      (data.variations || []).forEach((variation) => {
+        const selected = variation.options
+          .filter((opt) => allOptionIds.has(opt._id))
+          .map((opt) => opt.name);
+        if (selected.length) {
+          newSelected[variation._id] = selected;
+          newSelectedVarIds.push(variation._id);
+        }
+      });
+
+      setSelectedOptionsMap(newSelected);
+      setSelectedVariationIds(newSelectedVarIds);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, initialData, data]);
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [mode, initialData, data, allVariations]);
 
   // helpers: change handlers
-  const handleChange = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
+  const handleChange = (key, value) =>
+    setForm((prev) => ({ ...prev, [key]: value }));
 
   const handleImageUpload = (e, multiple = false) => {
     const files = e.target.files;
@@ -202,7 +248,10 @@ date_of_expiery: initialData.date_of_expiery
       const reader = new FileReader();
       reader.onload = () => {
         if (multiple) {
-          setForm((prev) => ({ ...prev, gallery_product: [...prev.gallery_product, reader.result] }));
+          setForm((prev) => ({
+            ...prev,
+            gallery_product: [...prev.gallery_product, reader.result],
+          }));
         } else {
           setForm((prev) => ({ ...prev, image: reader.result }));
         }
@@ -212,7 +261,10 @@ date_of_expiery: initialData.date_of_expiery
   };
 
   const removeGalleryImage = (index) => {
-    setForm((prev) => ({ ...prev, gallery_product: prev.gallery_product.filter((_, i) => i !== index) }));
+    setForm((prev) => ({
+      ...prev,
+      gallery_product: prev.gallery_product.filter((_, i) => i !== index),
+    }));
   };
 
   const handleVariationChange = (ids) => {
@@ -239,29 +291,49 @@ date_of_expiery: initialData.date_of_expiery
   }, []);
 
   // regenerate combinations when selectedOptionsMap changes
-  useEffect(() => {
-    if (form.different_price) {
-      const newVariants = generateCombinations(selectedOptionsMap, allVariations);
-      setForm((prevForm) => {
-        const updatedPrices = newVariants.map((newVariant) => {
-          const oldVariant = prevForm.prices.find((p) => {
-            if (!p.options) return false;
-            if (p.options.length !== newVariant.options.length) return false;
-            const oldOptionsStr = [...p.options].sort().join(",");
-            const newOptionsStr = [...newVariant.options].sort().join(",");
-            return oldOptionsStr === newOptionsStr;
-          });
-          return oldVariant ? { ...newVariant, ...oldVariant } : newVariant;
+useEffect(() => {
+  if (form.different_price) {
+    const newVariants = generateCombinations(selectedOptionsMap, allVariations);
+    setForm((prevForm) => {
+      const updatedPrices = newVariants.map((newVariant) => {
+        const oldVariant = prevForm.prices.find((p) => {
+          if (!p.options) return false;
+          if (p.options.length !== newVariant.options.length) return false;
+          const oldOptionsStr = [...p.options].sort().join(",");
+          const newOptionsStr = [...newVariant.options].sort().join(",");
+          return oldOptionsStr === newOptionsStr;
         });
-        return { ...prevForm, prices: updatedPrices };
+        // Derive name from newVariant options if oldVariant name is missing
+        const optionNames = newVariant.options
+          .map((optionId) => {
+            const variation = allVariations.find((v) =>
+              v.options.some((opt) => opt._id === optionId)
+            );
+            const option = variation?.options.find(
+              (opt) => opt._id === optionId
+            );
+            return option ? option.name : null;
+          })
+          .filter((name) => name !== null);
+        const derivedName = optionNames.length
+          ? optionNames.join(" / ")
+          : "Unnamed Variant";
+
+        return oldVariant
+          ? { ...newVariant, ...oldVariant, name: oldVariant.name || derivedName }
+          : { ...newVariant, name: derivedName };
       });
-    } else {
-      setForm((prevForm) => ({ ...prevForm, prices: [] }));
-    }
-  }, [selectedOptionsMap, form.different_price, allVariations]);
+      return { ...prevForm, prices: updatedPrices };
+    });
+  } else {
+    setForm((prevForm) => ({ ...prevForm, prices: [] }));
+  }
+}, [selectedOptionsMap, form.different_price, allVariations]);
 
   const cleanBase64 = (dataUri) =>
-    typeof dataUri === "string" && dataUri.startsWith("data:") ? dataUri.split(",")[1] : dataUri;
+    typeof dataUri === "string" && dataUri.startsWith("data:")
+      ? dataUri.split(",")[1]
+      : dataUri;
 
   // form validation (same rules as original)
   const isFormValid = () => {
@@ -272,12 +344,17 @@ date_of_expiery: initialData.date_of_expiery
 
     if (form.different_price) {
       if (!form.prices || form.prices.length === 0) return false;
-      const allVariantsValid = form.prices.every((variant) => variant.price > 0 && (variant.stock ?? variant.low_stock) >= 0);
+      const allVariantsValid = form.prices.every(
+        (variant) =>
+          variant.price > 0 && (variant.stock ?? variant.low_stock) >= 0
+      );
       if (!allVariantsValid) return false;
-      const allOptionsSelected = selectedVariationIds.every((id) => selectedOptionsMap[id] && selectedOptionsMap[id].length > 0);
+      const allOptionsSelected = selectedVariationIds.every(
+        (id) => selectedOptionsMap[id] && selectedOptionsMap[id].length > 0
+      );
       if (!allOptionsSelected) return false;
     } else {
-      if ((form.quantity ?? 0) < 0 || (form.stock ?? 0) < 0) return false;
+      if ((form.quantity ?? 0) < 0 || (form.low_stock ?? 0) < 0) return false;
     }
 
     return true;
@@ -302,6 +379,8 @@ date_of_expiery: initialData.date_of_expiery
         image: cleanBase64(form.image),
         gallery_product: form.gallery_product.map((img) => cleanBase64(img)),
         different_price: form.different_price,
+        is_featured: form.is_featured,
+        low_stock: form.low_stock || 0, // ✅ Add low_stock to finalForm
       };
 
       finalForm.exp_ability = form.exp_ability;
@@ -310,25 +389,24 @@ date_of_expiery: initialData.date_of_expiery
       finalForm.start_quantaty = form.start_quantaty || 0;
       finalForm.product_has_imei = form.product_has_imei;
       finalForm.show_quantity = form.show_quantity;
-      if (form.show_quantity) finalForm.maximum_to_show = form.maximum_to_show || 0;
+      if (form.show_quantity)
+        finalForm.maximum_to_show = form.maximum_to_show || 0;
 
       if (finalForm.different_price) {
         finalForm.prices = form.prices.map((variant) => ({
           price: variant.price,
           code: variant.code,
-          quantity: variant.quantity ?? 0, // ✅ الكمية
+          quantity: variant.quantity ?? 0,
           gallery: variant.image
-            ? [cleanBase64(variant.image)] // ✅ صورة واحدة داخل مصفوفة
-            : (variant.gallery || []).map((img) => cleanBase64(img)), // ✅ أو أكتر لو موجودة
+            ? [cleanBase64(variant.image)]
+            : (variant.gallery || []).map((img) => cleanBase64(img)),
           options: variant.options,
         }));
-      }
-
-      else {
+      } else {
         finalForm = {
           ...finalForm,
           quantity: form.quantity || 0,
-          stock: form.stock || 0,
+          low_stock: form.low_stock || 0,
           minimum_quantity_sale: form.minimum_quantity_sale,
           discount: form.discount,
         };
@@ -336,14 +414,13 @@ date_of_expiery: initialData.date_of_expiery
         delete finalForm.prices;
       }
 
-      if (!finalForm.categoryId || finalForm.categoryId.length === 0) delete finalForm.categoryId;
+      if (!finalForm.categoryId || finalForm.categoryId.length === 0)
+        delete finalForm.categoryId;
       if (!finalForm.brandId) delete finalForm.brandId;
 
-      // call parent
+      console.log("📦 Final form submitted:", finalForm); // ✅ Debug log to verify low_stock
       await onSubmit(finalForm);
-      // parent might navigate away; but if not, we can show success here in parent.
     } catch (err) {
-      // parent handles toast usually; but fallback:
       console.error(err);
       toast.error("Operation failed");
     } finally {
@@ -370,8 +447,18 @@ date_of_expiery: initialData.date_of_expiery
 
   // header text and button label
   const headerTitle = mode === "add" ? "Add New Product" : "Edit Product";
-  const headerSubtitle = mode === "add" ? "Fill in the product details below" : "Update product details below";
-  const submitLabel = submitLoading || isSubmitting ? (mode === "add" ? "Saving..." : "Updating...") : mode === "add" ? "Save Product" : "Update Product";
+  const headerSubtitle =
+    mode === "add"
+      ? "Fill in the product details below"
+      : "Update product details below";
+  const submitLabel =
+    submitLoading || isSubmitting
+      ? mode === "add"
+        ? "Saving..."
+        : "Updating..."
+      : mode === "add"
+      ? "Save Product"
+      : "Update Product";
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -392,8 +479,18 @@ date_of_expiery: initialData.date_of_expiery
                     value="general"
                     className="flex-1 data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-secondary data-[state=active]:text-secondary rounded-none py-4 font-medium"
                   >
-                    <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <svg
+                      className="h-5 w-5 mr-2"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
                     </svg>
                     General Info
                   </TabsTrigger>
@@ -402,8 +499,18 @@ date_of_expiery: initialData.date_of_expiery
                     value="media"
                     className="flex-1 data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-secondary data-[state=active]:text-secondary rounded-none py-4 font-medium"
                   >
-                    <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    <svg
+                      className="h-5 w-5 mr-2"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
                     </svg>
                     Media
                   </TabsTrigger>
@@ -412,8 +519,18 @@ date_of_expiery: initialData.date_of_expiery
                     value="price"
                     className="flex-1 data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-secondary data-[state=active]:text-secondary rounded-none py-4 font-medium"
                   >
-                    <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <svg
+                      className="h-5 w-5 mr-2"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
                     </svg>
                     Pricing
                   </TabsTrigger>
@@ -436,15 +553,35 @@ date_of_expiery: initialData.date_of_expiery
         </div>
 
         <div className="mt-6 flex items-center justify-end gap-3">
-          <Button variant="outline" onClick={() => navigate("/product")} className="px-6">
+          <Button
+            variant="outline"
+            onClick={() => navigate("/product")}
+            className="px-6"
+          >
             Cancel
           </Button>
 
-          <Button onClick={handleSubmit} disabled={isSubmitting || submitLoading || !isFormValid()} className="px-8 bg-secondary hover:bg-secondary/90">
-            {submitLabel === "Saving..." || submitLabel === "Updating..." ? submitLabel : (
+          <Button
+            onClick={handleSubmit}
+            disabled={isSubmitting || submitLoading || !isFormValid()}
+            className="px-8 bg-secondary hover:bg-secondary/90"
+          >
+            {submitLabel === "Saving..." || submitLabel === "Updating..." ? (
+              submitLabel
+            ) : (
               <>
-                <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                <svg
+                  className="h-4 w-4 mr-2"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
                 </svg>
                 {submitLabel}
               </>
