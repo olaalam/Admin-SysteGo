@@ -36,6 +36,7 @@ export default function CategoryEdit() {
 
         setCategoryData({
           name: category.name || "",
+          ar_name: category.ar_name || "",
           image: category.image || "",
           parentId: category.parentId?._id || "", // نخزن id فقط
         });
@@ -51,7 +52,9 @@ export default function CategoryEdit() {
   }, [id]);
 
   const fields = [
-    { key: "name", label: "Name", required: true },
+    { key: "ar_name", label: "Name (Arabic)", required: true },
+{ key: "name", label: "Name (English)", required: false },
+
     { key: "image", label: "Image", type: "image", required: true },
     {
       key: "parentId",

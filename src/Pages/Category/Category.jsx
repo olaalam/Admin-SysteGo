@@ -39,6 +39,8 @@ const Category = () => {
 
 const columns = [
   { key: "name", header: "Name", filterable: true },
+  {key: "ar_name", header: "Name (Arabic)", filterable: true},
+
   {
     key: "image",
     header: "Image",
@@ -51,13 +53,8 @@ const columns = [
     filterable: true,
     render: (value) => value?.name || "—", // 👈 هنا الحل
   },
-  {
-    key: "number_of_products",
-    header: "number_of_products",
-    filterable: true,
-  },
-  { key: "stock_quantity", header: "stock_quantity", filterable: true },
-  { key: "value", header: "value", filterable: true },
+
+
   { key: "product_quantity", header: "product_quantity", filterable: true },
 ];
 

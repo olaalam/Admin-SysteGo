@@ -51,10 +51,11 @@ const CategoryAdd = () => {
     };
 
     return [
-      { key: "name", label: "Name", required: true },
+    { key: "ar_name", label: "Name (Arabic)", required: true },
+{ key: "name", label: "Name (English)", required: false },
+
       { key: "image", label: "Image", type: "image", required: true },
       // إضافة حقل الحالة كـ switch
-      { key: "status", label: "Is Active", type: "switch", initialValue: true },
       parentCategoryField,
     ];
   }, [parentOptions, fetchingParents]); // يعتمد على البيانات وحالة التحميل
@@ -93,7 +94,7 @@ const CategoryAdd = () => {
         onCancel={() => navigate("/category")}
         // ⭐️ دمج حالة التحميل: الإرسال أو جلب الفئات
         loading={submitting || fetchingParents} 
-        initialData={{ status: true, parentId: "" }}
+        initialData={{ parentId: "" }}
       />
     </div>
   );
