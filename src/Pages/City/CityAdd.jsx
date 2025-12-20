@@ -43,9 +43,11 @@ const CityAdd = () => {
     }));
     
     return [
-      { key: "name", label: "Name", required: true },
-      {
-        key: "countryId", // ⭐️ تغيير key إلى countryId ليتوافق مع متطلبات الـ API الشائعة
+{ key: "ar_name", label: "Name (Arabic)", required: true },
+{ key: "name", label: "Name (English)", required: false },
+{key:"shipingCost",label:"Shipping Cost",type:"number",required:false},
+{
+        key: "country", // ⭐️ تغيير key إلى countryId ليتوافق مع متطلبات الـ API الشائعة
         label: "Country",
         type: "select",
         required: true,
@@ -62,7 +64,9 @@ const CityAdd = () => {
       // ⭐️ التأكد من أن payload يحوي countryId وليس country
       const payload = {
         name: data.name,
-        countryId: data.countryId, // نستخدم countryId بدلاً من country في الـ key
+        ar_name: data.ar_name,
+        shipingCost: data.shipingCost,
+        country: data.country, // نستخدم countryId بدلاً من country في الـ key
       };
 
       // ⭐️ استخدام postData بدلاً من api.post

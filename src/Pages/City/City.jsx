@@ -24,6 +24,12 @@ const City = () => {
   const columns = [
     { key: "name", header: "City Name", filterable: true },
     {
+      key: "ar_name",
+      header: "City Name (Arabic)",
+      filterable: true,
+    },
+    { key: "shipingCost", header: "Shipping Cost", filterable: true },
+    {
       key: "country.name",
       header: "Country",
       filterable: true,

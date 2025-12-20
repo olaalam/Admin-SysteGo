@@ -28,7 +28,9 @@ export default function CityEdit() {
 
         setCityData({
           name: city.name || "",
-          countryId: city.country?._id || "",
+          ar_name: city.ar_name || "",
+          shipingCost: city.shipingCost || 0,
+          country: city.country?._id || "",
         });
       } catch (err) {
         toast.error("Failed to fetch city data");
@@ -44,6 +46,8 @@ export default function CityEdit() {
   // إعداد الفورم
   const fields = useMemo(() => [
     { key: "name", label: "Name", required: true },
+    { key: "ar_name", label: "Name (Arabic)", required: true },
+    { key: "shipingCost", label: "Shipping Cost", type: "number", required: false },
     {
       key: "country",
       label: "Country",
