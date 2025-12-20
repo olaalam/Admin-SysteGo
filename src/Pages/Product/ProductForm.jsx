@@ -10,14 +10,6 @@ import ProductGeneralTab from "./ProductGeneralTab";
 import ProductMediaTab from "./ProductMediaTab";
 import ProductPriceTab from "./ProductPriceTab";
 
-/**
- * ProductForm (shared)
- * props:
- * - mode: "add" | "edit"
- * - initialData: product object (for edit)
- * - onSubmit: async function(finalForm) => should handle API call (POST/PUT) in parent
- * - submitLoading: optional boolean (parent can pass while waiting) - component also keeps local isSubmitting
- */
 const ProductForm = ({
   mode = "add",
   initialData = {},
@@ -26,7 +18,7 @@ const ProductForm = ({
 }) => {
   const navigate = useNavigate();
 
-  // fetch categories / brands / variations (same endpoint used in original ProductAdd)
+  // fetch categories / brands / variations / taxes
   const { data, loading: metaLoading } = useGet("/api/admin/product/select");
 
   // local states
@@ -34,12 +26,16 @@ const ProductForm = ({
   const [allVariations, setAllVariations] = useState([]);
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
+  const [taxes, setTaxes] = useState([]); // ✅ إضافة taxes
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [form, setForm] = useState({
     name: "",
+    ar_name: "", // ✅ إضافة ar_name
+    ar_description: "", // ✅ إضافة ar_description
     categoryId: [],
     brandId: "",
+    taxesId: "", // ✅ إضافة taxesId
     unit: "piece",
     description: "",
     minimum_quantity_sale: 1,
@@ -122,122 +118,118 @@ const ProductForm = ({
     }));
   };
 
-  // fill meta data (categories, brands, variations)
+  // fill meta data (categories, brands, variations, taxes)
   useEffect(() => {
     if (data) {
       setCategories(data.categories || []);
       setBrands(data.brands || []);
       setAllVariations(data.variations || []);
+      setTaxes(data.taxes || []); // ✅ إضافة taxes
     }
   }, [data]);
 
-useEffect(() => {
-  if (mode === "edit" && initialData) {
-    // Map product shape to form shape used here
-    setForm((prev) => {
-      const newForm = {
-        ...prev,
-        name: initialData.name || "",
-        categoryId: initialData.categoryId
-          ? initialData.categoryId.map((c) => (c._id ? c._id : c))
-          : initialData.categoryId || [],
-        brandId: initialData.brandId?._id || initialData.brandId || "",
-        unit: initialData.unit || prev.unit,
-        description: initialData.description || "",
-        image: initialData.image || "",
-        gallery_product: initialData.gallery_product || initialData.gallery || [],
-        minimum_quantity_sale:
-          initialData.minimum_quantity_sale || prev.minimum_quantity_sale,
-        price: initialData.price ?? prev.price,
-        different_price: initialData.different_price ?? prev.different_price,
-        prices: initialData.prices?.map((p) => {
-          // Extract option IDs (supports earlier format)
-          const optionIds = [];
-          p.variations?.forEach((variation) => {
-            variation.options?.forEach((opt) => optionIds.push(opt._id));
-          });
-          // Fallback if variant stored as options array
-          if (p.options && Array.isArray(p.options) && p.options.length) {
-            optionIds.push(...p.options);
+  useEffect(() => {
+    if (mode === "edit" && initialData) {
+      setForm((prev) => {
+        const newForm = {
+          ...prev,
+          name: initialData.name || "",
+          ar_name: initialData.ar_name || "", // ✅ إضافة ar_name
+          ar_description: initialData.ar_description || "", // ✅ إضافة ar_description
+          categoryId: initialData.categoryId
+            ? initialData.categoryId.map((c) => (c._id ? c._id : c))
+            : initialData.categoryId || [],
+          brandId: initialData.brandId?._id || initialData.brandId || "",
+          taxesId: initialData.taxesId?._id || initialData.taxesId || "", // ✅ إضافة taxesId
+          unit: initialData.unit || prev.unit,
+          description: initialData.description || "",
+          image: initialData.image || "",
+          gallery_product: initialData.gallery_product || initialData.gallery || [],
+          minimum_quantity_sale:
+            initialData.minimum_quantity_sale || prev.minimum_quantity_sale,
+          price: initialData.price ?? prev.price,
+          different_price: initialData.different_price ?? prev.different_price,
+          prices: initialData.prices?.map((p) => {
+            const optionIds = [];
+            p.variations?.forEach((variation) => {
+              variation.options?.forEach((opt) => optionIds.push(opt._id));
+            });
+            if (p.options && Array.isArray(p.options) && p.options.length) {
+              optionIds.push(...p.options);
+            }
+
+            const optionNames = optionIds
+              .map((optionId) => {
+                const variation = allVariations.find((v) =>
+                  v.options.some((opt) => opt._id === optionId)
+                );
+                const option = variation?.options.find(
+                  (opt) => opt._id === optionId
+                );
+                return option ? option.name : null;
+              })
+              .filter((name) => name !== null);
+
+            return {
+              _id: p._id,
+              price: p.price,
+              quantity: p.quantity || 0,
+              code: p.code || "",
+              image: p.gallery?.[0] || p.image || "",
+              options: optionIds.length ? optionIds : p.options || [],
+              name: optionNames.length ? optionNames.join(" / ") : p.name || "Unnamed Variant",
+            };
+          }) || [],
+          quantity: initialData.quantity || 0,
+          low_stock: initialData.low_stock || 0,
+          exp_ability: initialData.exp_ability || false,
+          date_of_expiery: initialData.date_of_expiery
+            ? new Date(initialData.date_of_expiery).toISOString().split("T")[0]
+            : "",
+          whole_price: initialData.whole_price || 0,
+          start_quantaty: initialData.start_quantaty || 0,
+          product_has_imei: initialData.product_has_imei || false,
+          show_quantity: initialData.show_quantity || false,
+          maximum_to_show: initialData.maximum_to_show || 0,
+          is_featured: initialData.is_featured || false,
+        };
+
+        console.log("Initial prices:", newForm.prices);
+        return newForm;
+      });
+
+      if (
+        initialData.different_price &&
+        initialData.prices?.length > 0 &&
+        data?.variations
+      ) {
+        const allOptionIds = new Set();
+        initialData.prices.forEach((p) => {
+          p.variations?.forEach((variation) =>
+            variation.options?.forEach((opt) => allOptionIds.add(opt._id))
+          );
+          if (p.options && Array.isArray(p.options))
+            p.options.forEach((opt) => allOptionIds.add(opt));
+        });
+
+        const newSelected = {};
+        const newSelectedVarIds = [];
+        (data.variations || []).forEach((variation) => {
+          const selected = variation.options
+            .filter((opt) => allOptionIds.has(opt._id))
+            .map((opt) => opt.name);
+          if (selected.length) {
+            newSelected[variation._id] = selected;
+            newSelectedVarIds.push(variation._id);
           }
+        });
 
-          // Map option IDs to their names using allVariations
-          const optionNames = optionIds
-            .map((optionId) => {
-              const variation = allVariations.find((v) =>
-                v.options.some((opt) => opt._id === optionId)
-              );
-              const option = variation?.options.find(
-                (opt) => opt._id === optionId
-              );
-              return option ? option.name : null; // Return null if not found
-            })
-            .filter((name) => name !== null); // Filter out null values
-
-          return {
-            _id: p._id,
-            price: p.price,
-            quantity: p.quantity || 0,
-            code: p.code || "",
-            image: p.gallery?.[0] || p.image || "",
-            options: optionIds.length ? optionIds : p.options || [],
-            name: optionNames.length ? optionNames.join(" / ") : p.name || "Unnamed Variant", // Fallback to "Unnamed Variant" if no names
-          };
-        }) || [],
-        quantity: initialData.quantity || 0,
-        low_stock: initialData.low_stock || 0,
-        exp_ability: initialData.exp_ability || false,
-        date_of_expiery: initialData.date_of_expiery
-          ? new Date(initialData.date_of_expiery).toISOString().split("T")[0]
-          : "",
-        whole_price: initialData.whole_price || 0,
-        start_quantaty: initialData.start_quantaty || 0,
-        product_has_imei: initialData.product_has_imei || false,
-        show_quantity: initialData.show_quantity || false,
-        maximum_to_show: initialData.maximum_to_show || 0,
-        is_featured: initialData.is_featured || false,
-      };
-
-      // Debug log to verify prices
-      console.log("Initial prices:", newForm.prices);
-      return newForm;
-    });
-
-    // Prepare selectedOptionsMap & selectedVariationIds based on prices (if different_price)
-    if (
-      initialData.different_price &&
-      initialData.prices?.length > 0 &&
-      data?.variations
-    ) {
-      const allOptionIds = new Set();
-      initialData.prices.forEach((p) => {
-        p.variations?.forEach((variation) =>
-          variation.options?.forEach((opt) => allOptionIds.add(opt._id))
-        );
-        if (p.options && Array.isArray(p.options))
-          p.options.forEach((opt) => allOptionIds.add(opt));
-      });
-
-      const newSelected = {};
-      const newSelectedVarIds = [];
-      (data.variations || []).forEach((variation) => {
-        const selected = variation.options
-          .filter((opt) => allOptionIds.has(opt._id))
-          .map((opt) => opt.name);
-        if (selected.length) {
-          newSelected[variation._id] = selected;
-          newSelectedVarIds.push(variation._id);
-        }
-      });
-
-      setSelectedOptionsMap(newSelected);
-      setSelectedVariationIds(newSelectedVarIds);
+        setSelectedOptionsMap(newSelected);
+        setSelectedVariationIds(newSelectedVarIds);
+      }
     }
-  }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [mode, initialData, data, allVariations]);
+  }, [mode, initialData, data, allVariations]);
 
-  // helpers: change handlers
   const handleChange = (key, value) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
@@ -290,52 +282,49 @@ useEffect(() => {
     });
   }, []);
 
-  // regenerate combinations when selectedOptionsMap changes
-useEffect(() => {
-  if (form.different_price) {
-    const newVariants = generateCombinations(selectedOptionsMap, allVariations);
-    setForm((prevForm) => {
-      const updatedPrices = newVariants.map((newVariant) => {
-        const oldVariant = prevForm.prices.find((p) => {
-          if (!p.options) return false;
-          if (p.options.length !== newVariant.options.length) return false;
-          const oldOptionsStr = [...p.options].sort().join(",");
-          const newOptionsStr = [...newVariant.options].sort().join(",");
-          return oldOptionsStr === newOptionsStr;
-        });
-        // Derive name from newVariant options if oldVariant name is missing
-        const optionNames = newVariant.options
-          .map((optionId) => {
-            const variation = allVariations.find((v) =>
-              v.options.some((opt) => opt._id === optionId)
-            );
-            const option = variation?.options.find(
-              (opt) => opt._id === optionId
-            );
-            return option ? option.name : null;
-          })
-          .filter((name) => name !== null);
-        const derivedName = optionNames.length
-          ? optionNames.join(" / ")
-          : "Unnamed Variant";
+  useEffect(() => {
+    if (form.different_price) {
+      const newVariants = generateCombinations(selectedOptionsMap, allVariations);
+      setForm((prevForm) => {
+        const updatedPrices = newVariants.map((newVariant) => {
+          const oldVariant = prevForm.prices.find((p) => {
+            if (!p.options) return false;
+            if (p.options.length !== newVariant.options.length) return false;
+            const oldOptionsStr = [...p.options].sort().join(",");
+            const newOptionsStr = [...newVariant.options].sort().join(",");
+            return oldOptionsStr === newOptionsStr;
+          });
+          const optionNames = newVariant.options
+            .map((optionId) => {
+              const variation = allVariations.find((v) =>
+                v.options.some((opt) => opt._id === optionId)
+              );
+              const option = variation?.options.find(
+                (opt) => opt._id === optionId
+              );
+              return option ? option.name : null;
+            })
+            .filter((name) => name !== null);
+          const derivedName = optionNames.length
+            ? optionNames.join(" / ")
+            : "Unnamed Variant";
 
-        return oldVariant
-          ? { ...newVariant, ...oldVariant, name: oldVariant.name || derivedName }
-          : { ...newVariant, name: derivedName };
+          return oldVariant
+            ? { ...newVariant, ...oldVariant, name: oldVariant.name || derivedName }
+            : { ...newVariant, name: derivedName };
+        });
+        return { ...prevForm, prices: updatedPrices };
       });
-      return { ...prevForm, prices: updatedPrices };
-    });
-  } else {
-    setForm((prevForm) => ({ ...prevForm, prices: [] }));
-  }
-}, [selectedOptionsMap, form.different_price, allVariations]);
+    } else {
+      setForm((prevForm) => ({ ...prevForm, prices: [] }));
+    }
+  }, [selectedOptionsMap, form.different_price, allVariations]);
 
   const cleanBase64 = (dataUri) =>
     typeof dataUri === "string" && dataUri.startsWith("data:")
       ? dataUri.split(",")[1]
       : dataUri;
 
-  // form validation (same rules as original)
   const isFormValid = () => {
     if (!form.name || form.name.trim() === "") return false;
     if (!form.categoryId || form.categoryId.length === 0) return false;
@@ -360,7 +349,6 @@ useEffect(() => {
     return true;
   };
 
-  // final submit -> build payload then call parent's onSubmit
   const handleSubmit = async () => {
     if (!isFormValid()) {
       toast.error("Please fill in all required fields and correct the errors.");
@@ -371,8 +359,11 @@ useEffect(() => {
     try {
       let finalForm = {
         name: form.name,
+        ar_name: form.ar_name, // ✅ إضافة ar_name
+        ar_description: form.ar_description, // ✅ إضافة ar_description
         categoryId: form.categoryId,
         brandId: form.brandId || "",
+        taxesId: form.taxesId || "", // ✅ إضافة taxesId
         unit: form.unit,
         price: form.price,
         description: form.description,
@@ -380,7 +371,7 @@ useEffect(() => {
         gallery_product: form.gallery_product.map((img) => cleanBase64(img)),
         different_price: form.different_price,
         is_featured: form.is_featured,
-        low_stock: form.low_stock || 0, // ✅ Add low_stock to finalForm
+        low_stock: form.low_stock || 0,
       };
 
       finalForm.exp_ability = form.exp_ability;
@@ -417,8 +408,9 @@ useEffect(() => {
       if (!finalForm.categoryId || finalForm.categoryId.length === 0)
         delete finalForm.categoryId;
       if (!finalForm.brandId) delete finalForm.brandId;
+      if (!finalForm.taxesId) delete finalForm.taxesId; // ✅ حذف taxesId إذا كان فارغ
 
-      console.log("📦 Final form submitted:", finalForm); // ✅ Debug log to verify low_stock
+      console.log("📦 Final form submitted:", finalForm);
       await onSubmit(finalForm);
     } catch (err) {
       console.error(err);
@@ -428,12 +420,12 @@ useEffect(() => {
     }
   };
 
-  // formProps to pass to the tab components (keeps original shape)
   const formProps = {
     form,
     handleChange,
     categories,
     brands,
+    taxes, // ✅ إضافة taxes
     handleImageUpload,
     removeGalleryImage,
     loading: metaLoading,
@@ -445,7 +437,6 @@ useEffect(() => {
     handleVariantFieldChange,
   };
 
-  // header text and button label
   const headerTitle = mode === "add" ? "Add New Product" : "Edit Product";
   const headerSubtitle =
     mode === "add"
