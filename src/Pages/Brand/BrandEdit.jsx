@@ -20,6 +20,7 @@ export default function BrandEdit() {
 
   const fields = useMemo(() => [
     { key: "name", label: "Name", required: true },
+    {key: "ar_name", label: "Name (Arabic)", required: true},
     { key: "logo", label: "Logo", type: "image", required: true },
   ], []);
 

@@ -39,6 +39,7 @@ const renderLogo = (url) => {
 
 const columns = [
   { key: "name", header: "Name", filterable: true },
+  {key: "ar_name", header: "Name (Arabic)", filterable: true},
   {
     key: "logo",
     header: "Logo",

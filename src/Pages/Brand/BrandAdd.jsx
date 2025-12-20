@@ -10,10 +10,10 @@ const BrandAdd = () => {
   const navigate = useNavigate();
 
   const fields = [
-    { key: "name", label: "Name", required: true },
+{ key: "ar_name", label: "Name (Arabic)", required: true },
+{ key: "name", label: "Name (English)", required: false },
     { key: "logo", label: "Logo", type: "image", required: true },
     // يمكن إضافة حقل الحالة لتفعيل/تعطيل العلامة التجارية عند الإضافة
-    { key: "status", label: "Is Active", type: "switch", required: false }, 
   ];
 
   // ⭐️ استخدام usePost: تحديد المسار وجلب postData وحالة التحميل loading
