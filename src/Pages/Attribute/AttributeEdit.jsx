@@ -19,7 +19,9 @@ export default function AttributeEdit() {
 
   const fields = useMemo(
     () => [
-      { key: "name", label: "Variation Name", required: true },
+      { key: "ar_name", label: "Name (Arabic)", required: true },
+{ key: "name", label: "Name (English)", required: false },
+
       {
         key: "options",
         label: "Options",

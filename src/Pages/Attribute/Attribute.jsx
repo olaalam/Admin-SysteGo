@@ -30,7 +30,9 @@ const Attribute = () => {
   };
 
   const columns = [
-    { key: "name", header: "Attribute Name", filterable: true },
+   { key: "ar_name", label: "Name (Arabic)", required: true },
+{ key: "name", label: "Name (English)", required: false },
+
     {
       key: "options",
       header: "Options",

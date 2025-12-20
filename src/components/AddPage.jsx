@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { UserPlus } from "lucide-react";
 import { ComboboxMultiSelect } from "@/components/ui/combobox-multi-select";
+import { Switch } from "@/components/ui/switch";
 
 const AddPage = ({
   title = "Add Item",
@@ -69,7 +70,8 @@ const AddPage = ({
   const addArrayItem = (key, subFields) => {
     const newItem = {};
     subFields.forEach((f) => {
-      newItem[f.key] = f.type === "checkbox" ? false : "";
+newItem[f.key] =
+  f.type === "checkbox" || f.type === "switch" ? false : "";
     });
     setFormData((prev) => ({
       ...prev,
@@ -166,34 +168,33 @@ const AddPage = ({
                           <label className="block text-xs text-gray-600 mb-1">
                             {sub.label}
                           </label>
-                          {sub.type === "checkbox" ? (
-                            <input
-                              type="checkbox"
-                              checked={item[sub.key] || false}
-                              onChange={(e) =>
-                                handleArrayChange(
-                                  field.key,
-                                  idx,
-                                  sub.key,
-                                  e.target.checked
-                                )
-                              }
-                            />
-                          ) : (
-                            <input
-                              type="text"
-                              className="w-full px-2 py-1 border rounded"
-                              value={item[sub.key] || ""}
-                              onChange={(e) =>
-                                handleArrayChange(
-                                  field.key,
-                                  idx,
-                                  sub.key,
-                                  e.target.value
-                                )
-                              }
-                            />
-                          )}
+{sub.type === "switch" ? (
+  <Switch
+    checked={item[sub.key] ?? false}
+    onCheckedChange={(val) =>
+      handleArrayChange(field.key, idx, sub.key, val)
+    }
+  />
+) : sub.type === "checkbox" ? (
+  <input
+    type="checkbox"
+    checked={item[sub.key] || false}
+    onChange={(e) =>
+      handleArrayChange(field.key, idx, sub.key, e.target.checked)
+    }
+  />
+) : (
+  <input
+    type="text"
+    className="w-full px-2 py-1 border rounded"
+    value={item[sub.key] || ""}
+    onChange={(e) =>
+      handleArrayChange(field.key, idx, sub.key, e.target.value)
+    }
+  />
+)}
+
+                          
                         </div>
                       ))}
                       <button
