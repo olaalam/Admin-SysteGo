@@ -234,7 +234,7 @@ const Product = () => {
   // Columns definition
   const columns = [
     {
-      key: "info",
+      key: "name",
       header: "Product Details",
       filterable: true,
       render: (_, item) => renderProductInfo(item),
@@ -244,12 +244,6 @@ const Product = () => {
       header: "Inventory",
       filterable: false,
       render: (_, item) => renderInventory(item),
-    },
-    {
-      key: "exp_ability",
-      header: "Expiration",
-      filterable: true,
-      render: (_, item) => renderExpiration(item),
     },
     {
       key: "features",

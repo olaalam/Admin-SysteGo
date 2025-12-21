@@ -4,7 +4,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { X, Upload, ChevronDown, RotateCw, Copy } from "lucide-react";
 import { toast } from "react-toastify";
-
+import useGet from "@/hooks/useGet";
 const ProductPriceTab = ({
   form,
   handleChange,
@@ -16,7 +16,14 @@ const ProductPriceTab = ({
   handleVariantFieldChange,
 }) => {
   const [showVariationDropdown, setShowVariationDropdown] = React.useState(false);
-
+const {
+  data: generatedCodeData,
+  loading: generatingCode,
+  refetch: generateCode,
+} = useGet(
+  "/api/admin/product/generate-code",
+  {},
+);
   const uniqueVariations = React.useMemo(() => {
     const seenIds = new Set();
     return allVariations.filter((variation) => {
@@ -63,18 +70,18 @@ const ProductPriceTab = ({
     selectedVariationIds.includes(v._id)
   );
 
-  const generateVariantCode = async (index) => {
-    try {
-      const response = await fetch("/api/admin/product/generate-code/");
-      const data = await response.json();
-      if (!data?.code) throw new Error("No code returned");
-      handleVariantFieldChange(index, "code", data.code);
-      toast.success(`Generated code: ${data.code}`);
-    } catch (err) {
-      console.error("Error generating code:", err);
-      toast.error("Failed to generate product code. Please try again.");
-    }
-  };
+const generateVariantCode = async (index) => {
+  await generateCode(); // فقط استدعي الـ refetch
+
+  // بعد ما يتم التحديث، استخدم data من الـ hook نفسه
+  if (generatedCodeData?.code) {
+    handleVariantFieldChange(index, "code", generatedCodeData.code);
+    toast.success(`Generated code: ${generatedCodeData.code}`);
+  } else {
+    toast.error("Failed to generate code");
+  }
+};
+
 
   const copyVariantCode = (code) => {
     if (!code) return;
@@ -347,14 +354,19 @@ const ProductPriceTab = ({
                                 className="h-9 w-40"
                                 placeholder="code"
                               />
-                              <button
-                                type="button"
-                                onClick={() => generateVariantCode(index)}
-                                className="h-9 w-9 flex items-center justify-center text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
-                                title="Generate Code"
-                              >
-                                <RotateCw className="h-4 w-4" />
-                              </button>
+<button
+  type="button"
+  onClick={() => generateVariantCode(index)}
+  disabled={generatingCode}
+  className="h-9 w-9 flex items-center justify-center text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+  title="Generate Code"
+>
+  {generatingCode ? (
+    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
+  ) : (
+    <RotateCw className="h-4 w-4" />
+  )}
+</button>
                               <button
                                 type="button"
                                 onClick={() => copyVariantCode(variant.code)}
