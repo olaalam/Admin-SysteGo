@@ -29,7 +29,7 @@ const ProductForm = ({
   const [taxes, setTaxes] = useState([]); // ✅ إضافة taxes
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [form, setForm] = useState({
+const [form, setForm] = useState({
     name: "",
     ar_name: "", // ✅ إضافة ar_name
     ar_description: "", // ✅ إضافة ar_description
@@ -48,9 +48,9 @@ const ProductForm = ({
     quantity: 0,
     low_stock: 0,
     exp_ability: false,
-    date_of_expiery: "",
     whole_price: 0,
     start_quantaty: 0,
+    cost: 0, // ✅ إضافة cost للمنتج الأساسي
     product_has_imei: false,
     show_quantity: false,
     maximum_to_show: 0,
@@ -174,6 +174,8 @@ const ProductForm = ({
               _id: p._id,
               price: p.price,
               quantity: p.quantity || 0,
+              cost: p.cost || 0, 
+              start_quantity: p.start_quantity || 0,
               code: p.code || "",
               image: p.gallery?.[0] || p.image || "",
               options: optionIds.length ? optionIds : p.options || [],
@@ -183,9 +185,9 @@ const ProductForm = ({
           quantity: initialData.quantity || 0,
           low_stock: initialData.low_stock || 0,
           exp_ability: initialData.exp_ability || false,
-          date_of_expiery: initialData.date_of_expiery
-            ? new Date(initialData.date_of_expiery).toISOString().split("T")[0]
-            : "",
+          // date_of_expiery: initialData.date_of_expiery
+          //   ? new Date(initialData.date_of_expiery).toISOString().split("T")[0]
+          //   : "",
           whole_price: initialData.whole_price || 0,
           start_quantaty: initialData.start_quantaty || 0,
           product_has_imei: initialData.product_has_imei || false,
@@ -375,7 +377,7 @@ const ProductForm = ({
       };
 
       finalForm.exp_ability = form.exp_ability;
-      if (form.exp_ability) finalForm.date_of_expiery = form.date_of_expiery;
+      // if (form.exp_ability) finalForm.date_of_expiery = form.date_of_expiery;
       finalForm.whole_price = form.whole_price || 0;
       finalForm.start_quantaty = form.start_quantaty || 0;
       finalForm.product_has_imei = form.product_has_imei;
@@ -386,6 +388,8 @@ const ProductForm = ({
       if (finalForm.different_price) {
         finalForm.prices = form.prices.map((variant) => ({
           price: variant.price,
+          cost: variant.cost || 0,
+          start_quantity: variant.start_quantity || 0,
           code: variant.code,
           quantity: variant.quantity ?? 0,
           gallery: variant.image

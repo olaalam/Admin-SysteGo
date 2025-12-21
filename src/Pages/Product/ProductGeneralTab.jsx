@@ -263,7 +263,7 @@ const ProductGeneralTab = ({ form, handleChange, categories, brands, taxes, load
       </div>
 
       {/* Expiry Date (Conditional) */}
-      {form.exp_ability && (
+      {/* {form.exp_ability && (
         <div className="mt-3">
           <label className="block text-sm font-medium text-gray-700">
             Expiry Date
@@ -275,7 +275,7 @@ const ProductGeneralTab = ({ form, handleChange, categories, brands, taxes, load
             className="mt-1 block w-full border rounded-md p-2"
           />
         </div>
-      )}
+      )} */}
 
       {/* Whole Price & Start Quantity */}
       <div className="grid grid-cols-2 gap-4 mt-4">
