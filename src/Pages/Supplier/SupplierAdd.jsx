@@ -1,72 +1,94 @@
-// src/pages/SupplierAdd.jsx (النسخة النهائية باستخدام usePost)
+// src/pages/SupplierAdd.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AddPage from "@/components/AddPage";
 import api from "@/api/api";
 import { toast } from "react-toastify";
 import Loader from "@/components/Loader";
-// ⭐️ استيراد الـ Hook المخصص
-import usePost from "@/hooks/usePost"; 
+import usePost from "@/hooks/usePost";
 
 const SupplierAdd = () => {
   const navigate = useNavigate();
-  const [cities, setCities] = useState([]);
-  const [countries, setCountries] = useState([]);
-  const [fetchingLists, setFetchingLists] = useState(true); // ⭐️ تم تغيير الاسم ليكون أوضح
 
-  // ⭐️ استخدام usePost: تحديد المسار وجلب postData وحالة التحميل loading
+  // ⭐️ نفس المتغيرات المستخدمة في Edit
+  const [allCountries, setAllCountries] = useState([]); // كل الدول
+  const [allCitiesByCountry, setAllCitiesByCountry] = useState({}); // مدن مفهرسة حسب الدولة
+  const [selectedCountryId, setSelectedCountryId] = useState(""); // الدولة المختارة
+  const [fetchingLists, setFetchingLists] = useState(true);
+
+  // ⭐️ استخدام usePost للإضافة
   const { postData, loading: submitting } = usePost("/api/admin/supplier/");
 
-  // ✅ تحديد الحقول باستخدام useMemo وربط المدن والدول كـ select
-  const fields = useMemo(() => [
-    { key: "username", label: "Username", required: true },
-    { key: "company_name", label: "Company Name", required: true },
-    { key: "email", label: "Email", type: "email", required: true },
-    { key: "phone_number", label: "Phone Number", required: true },
-    { key: "address", label: "Address", required: true },
-    {
-      key: "cityId",
-      label: "City",
-      type: "select",
-      required: true,
-      options: cities.map((city) => ({
-        value: city._id,
-        label: city.name,
-      })),
-      // ⭐️ تعطيل الحقل إذا كنا نحمل القوائم
-      disabled: fetchingLists, 
-      placeholder: fetchingLists ? "Loading cities..." : "Select city",
-    },
-    {
-      key: "countryId",
-      label: "Country",
-      type: "select",
-      required: true,
-      options: countries.map((country) => ({
-        value: country._id,
-        label: country.name,
-      })),
-      // ⭐️ تعطيل الحقل إذا كنا نحمل القوائم
-      disabled: fetchingLists,
-      placeholder: fetchingLists ? "Loading countries..." : "Select country",
-    },
-    { key: "image", label: "Image", type: "image", required: true },
-  ], [cities, countries, fetchingLists]); // ⭐️ إضافة fetchingLists كـ dependency
+  // ✅ حساب المدن المتاحة بناءً على الدولة المختارة (نفس Edit)
+  const availableCities = useMemo(() => {
+    if (!selectedCountryId) return [];
+    return allCitiesByCountry[selectedCountryId] || [];
+  }, [selectedCountryId, allCitiesByCountry]);
 
-  // ✅ جلب المدن والدول عند التحميل
+  // ✅ الحقول (متطابقة مع Edit)
+  const fields = useMemo(
+    () => [
+      { key: "username", label: "Username", required: true },
+      { key: "company_name", label: "Company Name", required: true },
+      { key: "email", label: "Email", type: "email", required: true },
+      { key: "phone_number", label: "Phone Number", required: true },
+      { key: "address", label: "Address", required: true },
+      {
+        key: "countryId",
+        label: "Country",
+        type: "select",
+        required: true,
+        options: allCountries.map((country) => ({
+          value: country._id,
+          label: country.name,
+        })),
+        onChange: (value) => {
+          setSelectedCountryId(value);
+          // امسح المدينة القديمة (مهم للـ Add)
+          // setSupplierData(prev => ({ ...prev, cityId: "" })); // مش ضروري هنا لأن initialData فاضي، لكن ممكن نضيفه لو عندك state للـ formData
+        },
+      },
+      {
+        key: "cityId",
+        label: "City",
+        type: "select",
+        required: true,
+        options: availableCities.map((city) => ({
+          value: city._id,
+          label: city.name,
+        })),
+        disabled: !selectedCountryId || availableCities.length === 0 || fetchingLists,
+        placeholder: fetchingLists ? "Loading cities..." : "Select city",
+      },
+      { key: "image", label: "Image", type: "image", required: true },
+    ],
+    [allCountries, availableCities, selectedCountryId, fetchingLists]
+  );
+
+  // ✅ جلب الدول والمدن عند التحميل (نفس الطريقة في Edit)
   useEffect(() => {
     const fetchLists = async () => {
       setFetchingLists(true);
       try {
-        const res = await api.get("/api/admin/supplier"); 
-        const citiesList = res.data?.data?.city || [];
-        const countriesList = res.data?.data?.country || [];
+        // افترض إن الـ endpoint ده بيرجع countries مع cities داخل كل country
+        const res = await api.get("/api/admin/supplier"); // أو أي endpoint مناسب، لو مختلف غيّره
+        const countriesList = res.data?.data?.countries || []; // تأكد من الهيكل
 
-        setCities(citiesList);
-        setCountries(countriesList);
+        if (!Array.isArray(countriesList)) {
+          throw new Error("Invalid countries data");
+        }
+
+        // فهرسة المدن حسب الدولة
+        const citiesByCountry = {};
+        countriesList.forEach((country) => {
+          citiesByCountry[country._id] = country.cities || [];
+        });
+
+        setAllCountries(countriesList);
+        setAllCitiesByCountry(citiesByCountry);
       } catch (err) {
-        toast.error("Failed to load city and country lists");
-        console.error("❌ Error loading cities/countries:", err);
+        toast.error("Failed to load countries and cities");
+        console.error("❌ Error loading lists:", err);
       } finally {
         setFetchingLists(false);
       }
@@ -76,15 +98,12 @@ const SupplierAdd = () => {
   }, []);
 
   // ✅ إرسال البيانات
-  const handleSubmit = async (data) => {
+  const handleSubmit = async (formData) => {
     try {
-      // ⭐️ استخدام postData بدلاً من api.post
-      await postData(data); 
-      
+      await postData(formData);
       toast.success("Supplier added successfully! 🎉");
       navigate("/supplier");
     } catch (err) {
-      // ✅ التعامل مع الأخطاء التفصيلية (مطابقة لـ AdminAdd.jsx)
       const errorMessage =
         err.response?.data?.error?.message ||
         err.response?.data?.message ||
@@ -102,20 +121,19 @@ const SupplierAdd = () => {
     }
   };
 
-  // ⭐️ عرض Loader أثناء جلب قوائم المدن والدول
+  // ⭐️ عرض Loader أثناء جلب القوائم
   if (fetchingLists) return <Loader />;
 
   return (
-    <div className="p-6">
+    <div className="p-6 bg-gray-100 min-h-screen">
       <AddPage
         title="Add Supplier"
         description="Fill in the supplier information and upload image"
         fields={fields}
         onSubmit={handleSubmit}
         onCancel={() => navigate("/supplier")}
-        // ⭐️ دمج حالة التحميل: الإرسال (submitting)
-        loading={submitting} 
-        initialData={{}}
+        loading={submitting}
+        initialData={{}} // فاضي لأنها إضافة جديدة
       />
     </div>
   );

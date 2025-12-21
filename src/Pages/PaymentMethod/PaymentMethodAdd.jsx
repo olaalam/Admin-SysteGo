@@ -10,6 +10,7 @@ const PaymentMethodAdd = () => {
 
   const fields = [
     { key: "name", label: "Name", required: true },
+    {key:"ar_name",label:"Arabic Name",required:true},
     { key: "discription", label: "Description", required: false },
     { key: "icon", label: "Icon / Logo", type: "image", required: true },
           {

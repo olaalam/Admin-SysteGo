@@ -20,6 +20,8 @@ export default function PaymentMethodEdit() {
   // ✅ تعديل: استخدام أسماء الحقول حسب JSON (icon, discription, isActive)
   const fields = useMemo(() => [
     { key: "name", label: "Name", required: true },
+        {key:"ar_name",label:"Arabic Name",required:true},
+
     { key: "discription", label: "Description", required: false }, // تغيير إلى discription
     { key: "icon", label: "Icon / Logo", type: "image", required: true }, 
           {
