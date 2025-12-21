@@ -319,7 +319,7 @@ export default function Sidebar() {
 
       {/* ✅ Desktop sidebar with toggle */}
       <aside
-        className={`hidden md:block h-screen bg-white border-r transition-all duration-300 flex flex-col overflow-hidden ${
+        className={`hidden md:block h-screen bg-white border-r transition-all duration-300 flex flex-col overflow-y-auto scrollbar-width-none [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${
           desktopCollapsed ? "w-16" : "w-64"
         }`}
       >
