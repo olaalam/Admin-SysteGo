@@ -233,14 +233,14 @@ export default function Sidebar() {
         </Sheet>
       </div>
 
-      {/* ✅ Desktop sidebar with toggle */}
+{/* ✅ Desktop sidebar with toggle */}
       <aside
-        className={`hidden md:block h-screen bg-white border-r transition-all duration-300 ${
+        className={`hidden md:block h-screen bg-white border-r transition-all duration-300 flex flex-col overflow-y-auto max-h-[90vh] scrollbar-width-none [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${
           desktopCollapsed ? "w-16" : "w-64"
         }`}
       >
         <div
-          className={`flex items-center p-6 border-b ${
+          className={`flex items-center p-6 border-b flex-shrink-0 ${
             desktopCollapsed ? "justify-center" : "justify-start"
           }`}
         >
@@ -260,7 +260,9 @@ export default function Sidebar() {
             />
           )}
         </div>
-        <ul className="pt-4">{renderMenuItems(menuItems)}</ul>
+        <div className="flex-1 overflow-y-auto max-h-full scrollbar-width-none [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+          <ul className="pt-4">{renderMenuItems(menuItems)}</ul>
+        </div>
       </aside>
     </>
   );
