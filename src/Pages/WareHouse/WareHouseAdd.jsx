@@ -18,7 +18,6 @@ const WareHouseAdd = () => {
     { key: "phone", label: "Phone", required: true },
     { key: "email", label: "Email", type: "email", required: true },
     // إضافة حقل اختياري لتحديد ما إذا كان المستودع هو المستودع الافتراضي
-    { key: "is_default", label: "Set as Default", type: "switch", initialValue: false }, 
   ];
 
   const handleSubmit = async (data) => {
@@ -62,7 +61,6 @@ const WareHouseAdd = () => {
           address: "",
           phone: "",
           email: "",
-          is_default: false,
           // stock_Quantity: 0, // 💡 هذا الحقل قد يكون غير ضروري في initialData لصفحة الإضافة
         }}
       />
