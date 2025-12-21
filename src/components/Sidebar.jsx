@@ -30,6 +30,7 @@ const menuItems = [
       { name: "Category", path: "/category" },
       { name: "Brand", path: "/brand" },
       { name: "Attribute", path: "/attribute" },
+       { name: "Unit", path: "/unit" },
       { name: "Barcode", path: "/barcode" },
     ],
   },

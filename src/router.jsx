@@ -38,6 +38,9 @@ import SupplierEdit from "./Pages/Supplier/SupplierEdit";
 import PaymentMethod from "./Pages/PaymentMethod/PaymentMethod";
 import PaymentMethodAdd from "./Pages/PaymentMethod/PaymentMethodAdd";
 import PaymentMethodEdit from "./Pages/PaymentMethod/PaymentMethodEdit";
+import Unit from "./Pages/Unit/Unit";
+import UnitAdd from "./Pages/Unit/UnitAdd";
+import UnitEdit from "./Pages/Unit/UnitEdit";
 export default function AppRoutes() {
   return (
     <Routes>
@@ -346,6 +349,32 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute>
               <PaymentMethodEdit />
+            </ProtectedRoute>
+          }
+        />
+      </Route>
+            <Route path="unit">
+        <Route
+          index
+          element={
+            <ProtectedRoute>
+              <Unit />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="add"
+          element={
+            <ProtectedRoute>
+              <UnitAdd />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="edit/:id"
+          element={
+            <ProtectedRoute>
+              <UnitEdit />
             </ProtectedRoute>
           }
         />

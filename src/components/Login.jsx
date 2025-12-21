@@ -20,7 +20,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import login from "../assets/login.jpg";
+import login from "../assets/Login.jpg";
 import logo from "../assets/logo.png";
 
 import usePost from "@/hooks/usePost"; // ✅ هوك البوست
