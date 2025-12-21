@@ -1,77 +1,97 @@
-// src/pages/BankAccountAdd.jsx (النسخة النهائية باستخدام usePost)
+// src/pages/BankAccountAdd.jsx
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import AddPage from "@/components/AddPage";
 import { toast } from "react-toastify";
-// ⭐️ افتراض: استخدام Hook مخصص للـ POST لتبسيط إدارة التحميل
-import  usePost  from "@/hooks/usePost"; // يجب توفر هذا الـ Hook في مسارك
+import usePost from "@/hooks/usePost";
 
 const BankAccountAdd = () => {
   const navigate = useNavigate();
 
-  // ⭐️ استخدام usePost بدلاً من إدارة setLoading يدوياً
-  const { postData, loading: submitting } = usePost("/api/admin/bank_account/");
+  const { postData, loading: submitting } = usePost(
+    "/api/admin/bank_account/"
+  );
 
   const fields = [
-    { 
-      key: "account_no", 
-      label: "Account Number", 
+    {
+      key: "name",
+      label: "Bank Name",
       type: "text",
       required: true,
-      placeholder: "Enter account number"
+      placeholder: "Enter bank name",
     },
-    { 
-      key: "name", 
-      label: "Bank Name", 
-      type: "text",
+    {
+      key: "warehouseId",
+      label: "Warehouse",
+      type: "select", // أو combobox حسب AddPage
       required: true,
-      placeholder: "Enter bank name"
+      placeholder: "Select warehouse",
     },
-    { 
-      key: "initial_balance", 
-      label: "Initial Balance", 
+    {
+      key: "balance",
+      label: "Initial Balance",
       type: "number",
       required: true,
-      placeholder: "0"
+      placeholder: "0",
     },
-    { 
-      key: "is_default", 
-      label: "Set as Default Account", 
-      type: "switch", 
-      required: false 
-    },
-    { 
-      key: "note", 
-      label: "Note", 
+    {
+      key: "description",
+      label: "Description",
       type: "textarea",
       required: false,
-      placeholder: "Add any notes (optional)"
+      placeholder: "Account description",
+    },
+    {
+      key: "image",
+      label: "Image",
+      type: "image", // حسب implementation عندك
+      required: false,
+    },
+    {
+      key: "status",
+      label: "Active",
+      type: "switch",
+      required: false,
+    },
+    {
+      key: "in_POS",
+      label: "Available in POS",
+      type: "switch",
+      required: false,
     },
   ];
 
   const handleSubmit = async (data) => {
     try {
-      console.log("📤 Submitting data:", data);
-      
-      // ⭐️ استخدام postData من الـ Hook
-      await postData(data);
-      
+      // ✅ هنا البيانات بقت بنفس keys المطلوبة من الـ backend
+      const payload = {
+        name: data.name,
+        warehouseId: data.warehouseId,
+        image: data.image || null,
+        description: data.description || "",
+        balance: String(data.balance), // API مستني string
+        status: Boolean(data.status),
+        in_POS: Boolean(data.in_POS),
+      };
+
+      console.log("📤 Submitting payload:", payload);
+
+      await postData(payload);
+
       toast.success("Bank account added successfully!");
       navigate("/accounting");
     } catch (err) {
       console.error("❌ Error adding bank account:", err);
-      
-      // ✅ ملاحظة: إدارة الأخطاء تتم عادةً داخل الـ Hook نفسه لتبسيط الكود هنا
-      // لكن يمكننا ترك منطق عرض التوست هنا (أو إزالته إذا كان Hook usePost يعالجها)
-      const errorMessage = 
-        err.response?.data?.error?.message || 
-        err.response?.data?.message || 
+
+      const errorMessage =
+        err.response?.data?.error?.message ||
+        err.response?.data?.message ||
         "Failed to add bank account";
-      
+
       const errorDetails = err.response?.data?.error?.details;
-      
-      if (errorDetails && Array.isArray(errorDetails)) {
-        errorDetails.forEach(detail => toast.error(detail));
+
+      if (Array.isArray(errorDetails)) {
+        errorDetails.forEach((d) => toast.error(d));
       } else {
         toast.error(errorMessage);
       }
@@ -88,15 +108,16 @@ const BankAccountAdd = () => {
         fields={fields}
         onSubmit={handleSubmit}
         onCancel={handleCancel}
-        initialData={{ 
-          account_no: "",
+        loading={submitting}
+        initialData={{
           name: "",
-          initial_balance: 0,
-          is_default: false,
-          note: ""
+          warehouseId: "",
+          image: null,
+          description: "",
+          balance: "",
+          status: true,
+          in_POS: true,
         }}
-        // ⭐️ استخدام حالة التحميل من الـ Hook
-        loading={submitting} 
       />
     </div>
   );

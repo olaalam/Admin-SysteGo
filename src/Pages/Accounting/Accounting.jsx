@@ -32,16 +32,17 @@ const DefaultSwitch = ({ isDefault, onChange, loading }) => {
     </button>
   );
 };
-
 const Accounting = () => {
   const { data, loading, error, refetch } = useGet("/api/admin/bank_account");
-  const { deleteData, loading: deleting } = useDelete(
-    "/api/admin/bank_account/delete"
-  );
-  
+  const { deleteData, deleting } = useDelete("/api/admin/bank_account/delete");
+
   const [deleteTarget, setDeleteTarget] = useState(null);
-  const [updatingDefault, setUpdatingDefault] = useState(false); // ✅ state للـ loading
-  const PaymentMethod = data?.accounts || [];
+  
+  // حالات التحديث المنفصلة
+  const [updatingDefault, setUpdatingDefault] = useState(false);
+  const [updatingPOS, setUpdatingPOS] = useState(false);
+
+  const PaymentMethod = data?.bankAccounts || [];
 
   const handleDelete = async (item) => {
     try {
@@ -52,66 +53,67 @@ const Accounting = () => {
     }
   };
 
-  // ✅ Handler للـ default account
-  const handleSetDefault = async (account) => {
-    console.log("🔵 handleSetDefault called with account:", account);
-    
-    // ✅ لو الـ account ده already default، متعملش حاجة
-    if (account.is_default) {
-      console.log("⚠️ Account is already default - no action needed");
-      return;
-    }
+// ✅ تغيير حالة الحساب (مفعل / غير مفعل) - toggle عادي
+const handleToggleStatus = async (account) => {
+  setUpdatingDefault(true); // هنستخدم نفس الـ state عشان الـ loading
+  try {
+    await api.put(`/api/admin/bank_account/${account._id}`, {
+      status: !account.status, // نبدل القيمة: true → false أو false → true
+    });
+    await refetch();
+  } catch (err) {
+    console.error(err);
+    alert("فشل تحديث حالة الحساب: " + (err.response?.data?.message || err.message));
+  } finally {
+    setUpdatingDefault(false);
+  }
+};
 
-    setUpdatingDefault(true);
+  // ✅ تغيير ظهور الحساب في POS
+  const handleTogglePOS = async (account) => {
+    setUpdatingPOS(true);
     try {
-      console.log("🚀 Sending PUT request to:", `/api/admin/bank_account/${account._id}`);
-      console.log("📦 Request body:", { is_default: true });
-      
-      // ✅ بعت request للـ API عشان نخلي الـ account ده default
-      const result = await api.put(`/api/admin/bank_account/${account._id}`, {
-        is_default: true,
+      await api.put(`/api/admin/bank_account/${account._id}`, {
+        in_POS: !account.in_POS, // نبدل القيمة الحالية
       });
-      
-      console.log("✅ PUT request successful:", result.data);
-
-      // ✅ نعمل refetch عشان نجيب الداتا المحدثة
-      // الـ backend المفروض يخلي هذا الـ account is_default: true
-      // وكل الباقي is_default: false
       await refetch();
-      console.log("🔄 Data refetched successfully");
     } catch (err) {
-      console.error("❌ Failed to set default account:", err);
-      alert("فشل تحديد الحساب كافتراضي: " + (err.response?.data?.message || err.message));
+      alert("فشل تحديث إعدادات POS: " + (err.response?.data?.message || err.message));
     } finally {
-      setUpdatingDefault(false);
+      setUpdatingPOS(false);
     }
   };
 
   const columns = [
-    { key: "account_no", header: "Account No", filterable: true },
     { key: "name", header: "Name", filterable: true },
-    { key: "initial_balance", header: "Initial Balance", filterable: false },
+    { key: "balance", header: "Initial Balance", filterable: false },
+{
+  key: "status",
+  header: "Status", // أو "Active" أو "Enabled" حسب المعنى اللي عايزاه
+  render: (status, item) => (
+    <DefaultSwitch
+      isDefault={!!status}
+      onChange={() => handleToggleStatus(item)}
+      loading={updatingDefault}
+    />
+  ),
+},
     {
-      key: "is_default",
-      header: "Default",
-      filterable: false,
-      // ✅ رندر الـ switch مع الـ handler
-      render: (isDefault, item) => (
+      key: "in_POS",
+      header: "Show in POS",
+      render: (in_POS, item) => (
         <DefaultSwitch
-          isDefault={isDefault}
-          onChange={() => handleSetDefault(item)}
-          loading={updatingDefault} // ✅ Disable أثناء التحديث
+          isDefault={!!in_POS}
+          onChange={() => handleTogglePOS(item)}
+          loading={updatingPOS}
         />
       ),
     },
-    { key: "note", header: "Note", filterable: false },
+    // باقي الأعمدة إذا فيه actions مثلاً
   ];
 
   if (loading) return <Loader />;
-  if (error)
-    return (
-      <div className="p-6 text-red-600 m-auto text-center">{error}</div>
-    );
+  if (error) return <div className="p-6 text-red-600 text-center">{error}</div>;
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
@@ -130,7 +132,6 @@ const Accounting = () => {
         filterable={true}
       />
 
-      {/* Delete Dialog */}
       {deleteTarget && (
         <DeleteDialog
           title="Delete Bank Account"

@@ -1,4 +1,4 @@
-// src/components/AddPage.jsx (النسخة المعدلة)
+// src/components/AddPage.jsx
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { UserPlus } from "lucide-react";
@@ -17,9 +17,7 @@ const AddPage = ({
 }) => {
   const [formData, setFormData] = useState({});
 
-  // 1. useEffect for initial data and field structure (Existing)
   useEffect(() => {
-    // هذه العملية ستحصل بشكل طبيعي عند استخدام الـ `key` الديناميكي في AdminAdd.jsx
     if (initialData && Object.keys(initialData).length > 0) {
       const filteredData = fields.reduce((acc, field) => {
         if (field.type === "array" || field.type === "multiselect") {
@@ -30,7 +28,7 @@ const AddPage = ({
           acc[field.key] =
             initialData[field.key] !== undefined
               ? initialData[field.key]
-              : field.type === "checkbox"
+              : field.type === "checkbox" || field.type === "switch"
               ? false
               : "";
         }
@@ -42,7 +40,7 @@ const AddPage = ({
         if (field.type === "array" || field.type === "multiselect") {
           acc[field.key] = [];
         } else {
-          acc[field.key] = field.type === "checkbox" ? false : "";
+          acc[field.key] = field.type === "checkbox" || field.type === "switch" ? false : "";
         }
         return acc;
       }, {});
@@ -50,17 +48,16 @@ const AddPage = ({
     }
   }, [JSON.stringify(initialData), fields]);
 
-  // ✅ الوظيفة المعدلة: لاستدعاء الـ onChange الخارجي عند تغيير القيمة
   const handleChange = (key, value) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
-    
-    // استدعاء الـ onChange الخارجي إذا كان موجوداً (خاصة لحقل positionId)
-    const fieldDef = fields.find(f => f.key === key);
+
+    const fieldDef = fields.find((f) => f.key === key);
     if (fieldDef && fieldDef.onChange) {
-        fieldDef.onChange(value);
+      fieldDef.onChange(value);
     }
   };
 
+  // ✅ كل الـ array logic محفوظة بالكامل
   const handleArrayChange = (key, index, subKey, value) => {
     const newArray = [...(formData[key] || [])];
     newArray[index] = { ...newArray[index], [subKey]: value };
@@ -70,8 +67,8 @@ const AddPage = ({
   const addArrayItem = (key, subFields) => {
     const newItem = {};
     subFields.forEach((f) => {
-newItem[f.key] =
-  f.type === "checkbox" || f.type === "switch" ? false : "";
+      newItem[f.key] =
+        f.type === "checkbox" || f.type === "switch" ? false : "";
     });
     setFormData((prev) => ({
       ...prev,
@@ -113,8 +110,7 @@ newItem[f.key] =
         toast.error(`Please select at least one ${field.label}`);
         return;
       }
-
-      if (field.required && !formData[field.key] && field.type !== "checkbox") {
+      if (field.required && !formData[field.key] && field.type !== "checkbox" && field.type !== "switch") {
         toast.error(`Please fill in ${field.label}`);
         return;
       }
@@ -155,8 +151,8 @@ newItem[f.key] =
                 {field.required && <span className="text-red-500">*</span>}
               </label>
 
+              {/* Array Field (محفوظ كامل) */}
               {field.type === "array" ? (
-                // ... (Array logic remains the same)
                 <div className="space-y-3">
                   {(formData[field.key] || []).map((item, idx) => (
                     <div
@@ -168,33 +164,31 @@ newItem[f.key] =
                           <label className="block text-xs text-gray-600 mb-1">
                             {sub.label}
                           </label>
-{sub.type === "switch" ? (
-  <Switch
-    checked={item[sub.key] ?? false}
-    onCheckedChange={(val) =>
-      handleArrayChange(field.key, idx, sub.key, val)
-    }
-  />
-) : sub.type === "checkbox" ? (
-  <input
-    type="checkbox"
-    checked={item[sub.key] || false}
-    onChange={(e) =>
-      handleArrayChange(field.key, idx, sub.key, e.target.checked)
-    }
-  />
-) : (
-  <input
-    type="text"
-    className="w-full px-2 py-1 border rounded"
-    value={item[sub.key] || ""}
-    onChange={(e) =>
-      handleArrayChange(field.key, idx, sub.key, e.target.value)
-    }
-  />
-)}
-
-                          
+                          {sub.type === "switch" ? (
+                            <Switch
+                              checked={item[sub.key] ?? false}
+                              onCheckedChange={(val) =>
+                                handleArrayChange(field.key, idx, sub.key, val)
+                              }
+                            />
+                          ) : sub.type === "checkbox" ? (
+                            <input
+                              type="checkbox"
+                              checked={item[sub.key] || false}
+                              onChange={(e) =>
+                                handleArrayChange(field.key, idx, sub.key, e.target.checked)
+                              }
+                            />
+                          ) : (
+                            <input
+                              type="text"
+                              className="w-full px-2 py-1 border rounded"
+                              value={item[sub.key] || ""}
+                              onChange={(e) =>
+                                handleArrayChange(field.key, idx, sub.key, e.target.value)
+                              }
+                            />
+                          )}
                         </div>
                       ))}
                       <button
@@ -223,42 +217,28 @@ newItem[f.key] =
                   creatable={field.creatable}
                 />
               ) : field.type === "select" ? (
-                // ✅ تعديل حقل الـ Select لربط الـ onChange الخارجي
                 <select
                   value={formData[field.key] || ""}
                   onChange={(e) => handleChange(field.key, e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                 >
-                  <option value="">Select {field.label}</option>
+                  <option value="">{field.placeholder || `Select ${field.label}`}</option>
                   {field.options?.map((opt) => (
                     <option key={opt.value} value={opt.value}>
                       {opt.label}
                     </option>
                   ))}
                 </select>
-              ) : field.type === "checkbox" ? (
-                // ... (Checkbox logic remains the same)
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={formData[field.key] || false}
-                    onChange={(e) => handleChange(field.key, e.target.checked)}
-                    className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
-                  />
-                </div>
               ) : field.type === "image" ? (
-                // ... (Image logic remains the same)
                 <div className="space-y-3">
                   <input
                     type="file"
                     accept="image/*"
-                    onChange={(e) =>
-                      handleImageChange(field.key, e.target.files[0])
-                    }
+                    onChange={(e) => handleImageChange(field.key, e.target.files[0])}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"
                   />
-                  {formData[field.key] && (
-                    <div className="relative w-32 h-32 border-2 border-gray-200 rounded-lg overflow-hidden">
+                  {formData[field.key] && typeof formData[field.key] === "string" && (
+                    <div className="relative w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg overflow-hidden">
                       <img
                         src={formData[field.key]}
                         alt="Preview"
@@ -267,14 +247,35 @@ newItem[f.key] =
                     </div>
                   )}
                 </div>
+              ) : field.type === "switch" ? (
+                // ✅ الـ Switch الرئيسي (للحقول العادية)
+                <div className="flex items-center space-x-3">
+                  <Switch
+                    checked={!!formData[field.key]}
+                    onCheckedChange={(checked) => handleChange(field.key, checked)}
+                  />
+                  <span className="text-sm text-gray-600">
+                    {formData[field.key] ? "On" : "Off"}
+                  </span>
+                </div>
+              ) : field.type === "checkbox" ? (
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={!!formData[field.key]}
+                    onChange={(e) => handleChange(field.key, e.target.checked)}
+                    className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                  />
+                </div>
               ) : (
-                // ... (Default input logic remains the same)
+                // Default: text, number, textarea
                 <input
                   type={field.type || "text"}
                   value={formData[field.key] ?? ""}
                   onChange={(e) => handleChange(field.key, e.target.value)}
-                  placeholder={`Enter ${field.label}`}
+                  placeholder={field.placeholder || `Enter ${field.label}`}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  {...(field.type === "textarea" ? { rows: field.rows || 4 } : {})}
                 />
               )}
             </div>
