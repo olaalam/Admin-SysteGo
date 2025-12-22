@@ -43,6 +43,7 @@ export default function AttributeEdit() {
 
         const formatted = {
           name: variation.name || "",
+          ar_name:variation.ar_name||"",
           options:
             variation.options?.map((opt) => ({
               id: opt._id,

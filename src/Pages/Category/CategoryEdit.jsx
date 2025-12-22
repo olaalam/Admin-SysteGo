@@ -64,26 +64,30 @@ export default function CategoryEdit() {
     },
   ];
 
-  const handleSubmit = async (formData) => {
-    try {
-      await putData(formData);
-      toast.success("Category updated successfully!");
-      navigate("/category");
-    } catch (err) {
-      const errorMessage =
-        err.response?.data?.error?.message ||
-        err.response?.data?.message ||
-        "Failed to update category";
+ const handleSubmit = async (formData) => {
+  try {
+    const payload = { ...formData };
 
-      const errorDetails = err.response?.data?.error?.details;
-      if (errorDetails && Array.isArray(errorDetails)) {
-        errorDetails.forEach((detail) => toast.error(detail));
-      } else {
-        toast.error(errorMessage);
-      }
-      console.error("❌ Error:", err.response?.data);
+    // لو الصورة string قديمة (URL) → ما نبعتهاش
+    if (typeof payload.image === "string" && payload.image === categoryData.image) {
+      delete payload.image;
     }
-  };
+
+    await putData(payload);
+
+    toast.success("Category updated successfully!");
+    navigate("/category");
+  } catch (err) {
+    const errorMessage =
+      err.response?.data?.error?.message ||
+      err.response?.data?.message ||
+      "Failed to update category";
+
+    toast.error(errorMessage);
+    console.error("❌ Error:", err.response?.data);
+  }
+};
+
 
   const handleCancel = () => navigate("/category");
 

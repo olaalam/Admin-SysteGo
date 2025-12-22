@@ -110,10 +110,26 @@ const AddPage = ({
         toast.error(`Please select at least one ${field.label}`);
         return;
       }
-      if (field.required && !formData[field.key] && field.type !== "checkbox" && field.type !== "switch") {
-        toast.error(`Please fill in ${field.label}`);
-        return;
-      }
+if (
+  field.required &&
+  field.type === "image" &&
+  (!formData[field.key] || typeof formData[field.key] !== "string")
+) {
+  toast.error(`Please upload ${field.label}`);
+  return;
+}
+
+if (
+  field.required &&
+  field.type !== "image" &&
+  field.type !== "checkbox" &&
+  field.type !== "switch" &&
+  !formData[field.key]
+) {
+  toast.error(`Please fill in ${field.label}`);
+  return;
+}
+
     }
 
     if (formData.from && formData.to) {

@@ -52,30 +52,40 @@ export default function BrandEdit() {
 
     fetchPaymentMethod();
   }, [id]);
+const handleSubmit = async (formData) => {
+  try {
+    const payload = { ...formData };
 
-  const handleSubmit = async (formData) => {
-    try {
-      await putData(formData);
-      toast.success("brand updated successfully!");
-      navigate("/brand");
-    } catch (err) {
-      // ✅ عرض الأخطاء من الـ API
-      const errorMessage = 
-        err.response?.data?.error?.message || 
-        err.response?.data?.message || 
-        "Failed to update brand";
-      
-      const errorDetails = err.response?.data?.error?.details;
-      
-      if (errorDetails && Array.isArray(errorDetails)) {
-        errorDetails.forEach(detail => toast.error(detail));
-      } else {
-        toast.error(errorMessage);
-      }
-      
-      console.error("❌ Error:", err.response?.data);
+    // ✅ لو اللوجو متغيرش (string قديمة) → ما نبعتوش
+    if (
+      typeof payload.logo === "string" &&
+      payload.logo === paymentMethodData.logo
+    ) {
+      delete payload.logo;
     }
-  };
+
+    await putData(payload);
+
+    toast.success("Brand updated successfully!");
+    navigate("/brand");
+  } catch (err) {
+    const errorMessage =
+      err.response?.data?.error?.message ||
+      err.response?.data?.message ||
+      "Failed to update brand";
+
+    const errorDetails = err.response?.data?.error?.details;
+
+    if (errorDetails && Array.isArray(errorDetails)) {
+      errorDetails.forEach((detail) => toast.error(detail));
+    } else {
+      toast.error(errorMessage);
+    }
+
+    console.error("❌ Error:", err.response?.data);
+  }
+};
+
 
   const handleCancel = () => navigate("/brand");
 
