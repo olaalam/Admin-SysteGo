@@ -7,10 +7,14 @@ export default function useDelete(defaultUrl) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const deleteData = async (customUrl = null) => {
+  const deleteData = async (customUrl = null, bodyData = null) => {
     try {
       setLoading(true);
-      const res = await api.delete(customUrl || defaultUrl);
+      
+      // If bodyData is provided, send it in the request
+      const res = bodyData 
+        ? await api.delete(customUrl || defaultUrl, { data: bodyData })
+        : await api.delete(customUrl || defaultUrl);
 
       if (res.data?.success) {
         toast.success(res.data?.message || "Deleted successfully!", {

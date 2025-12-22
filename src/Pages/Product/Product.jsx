@@ -1,5 +1,6 @@
 // src/pages/products.jsx
 import { useState } from "react";
+import * as XLSX from "xlsx";
 import DataTable from "@/components/DataTable";
 import Loader from "@/components/Loader";
 import DeleteDialog from "@/components/DeleteForm";
@@ -7,13 +8,16 @@ import DeleteDialog from "@/components/DeleteForm";
 import VariablePricesDialog from "@/components/VariablePricesDialog";
 import useGet from "@/hooks/useGet";
 import useDelete from "@/hooks/useDelete";
+import { toast } from "react-toastify";
 
 const Product = () => {
   const { data, loading, error, refetch } = useGet("/api/admin/product");
   const { deleteData, loading: deleting } = useDelete("/api/admin/product/delete");
 
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [bulkDeleteIds, setBulkDeleteIds] = useState(null);
   const [priceDialogProduct, setPriceDialogProduct] = useState(null);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
   // Helper function to fix image URLs (kept for renderProductInfo)
   const getImageUrl = (imageStr) => {
@@ -49,6 +53,111 @@ const Product = () => {
     }
   };
 
+  // Bulk delete with the required body format
+  const handleBulkDelete = async (selectedIds) => {
+    if (!selectedIds?.length) return;
+    setBulkDeleteIds(selectedIds);
+  };
+
+  const confirmBulkDelete = async () => {
+    if (!bulkDeleteIds?.length) return;
+
+    setBulkDeleting(true);
+
+    try {
+      // Pass the body data with ids array to deleteData
+      await deleteData("/api/admin/product", { ids: bulkDeleteIds });
+
+      refetch();
+      toast.success(`Successfully deleted ${bulkDeleteIds.length} product${bulkDeleteIds.length > 1 ? 's' : ''}`);
+    } catch (err) {
+      console.error("Bulk delete error:", err);
+      // Error toast is already handled by useDelete hook
+    } finally {
+      setBulkDeleting(false);
+      setBulkDeleteIds(null);
+    }
+  };
+
+  const handleExport = (dataToExport) => {
+    if (!dataToExport?.length) {
+      toast.error("No data found");
+      return;
+    }
+
+    const worksheetData = dataToExport.map((product) => ({
+      Name: product.name,
+      Category: product.categoryId?.[0]?.name || "",
+      Brand: product.brandId?.name || "",
+      Price: product.price,
+      "Whole Price": product.whole_price || "",
+      Stock: product.quantity,
+      Unit: product.unit,
+      "Min Sale Qty": product.minimum_quantity_sale || 1,
+      "Has Expiry": product.exp_ability ? "Yes" : "No",
+      "Expiry Date": product.date_of_expiery
+        ? new Date(product.date_of_expiery).toLocaleDateString("en-GB")
+        : "",
+      "Variable Price": product.different_price ? "Yes" : "No",
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(worksheetData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Products");
+
+    XLSX.writeFile(wb, `products_${new Date().toISOString().slice(0,10)}.xlsx`);
+  };
+
+  const handleImport = async (file) => {
+    if (!file) return;
+
+    try {
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data, { type: "array" });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const jsonData = XLSX.utils.sheet_to_json(sheet);
+
+      alert(`تم قراءة ${jsonData.length} صف من الملف\n(سيتم تطبيق الإرسال للباك إند لاحقاً)`);
+
+      console.log("Imported products data:", jsonData);
+
+      // هنا يفضل عمل API call للـ bulk import
+      // await fetch("/api/admin/product/import", {
+      //   method: "POST",
+      //   body: JSON.stringify({ products: jsonData }),
+      // });
+
+      refetch();
+    } catch (err) {
+      console.error("Import failed:", err);
+      alert("حدث خطأ أثناء قراءة ملف الاكسيل");
+    }
+  };
+
+  const downloadTemplate = () => {
+    const templateData = [
+      {
+        Name: "",
+        Category: "",
+        Brand: "",
+        Price: "",
+        "Whole Price": "",
+        Stock: "",
+        Unit: "",
+        "Min Sale Qty": "",
+        "Has Expiry": "Yes/No",
+        "Expiry Date": "DD/MM/YYYY",
+        "Variable Price": "Yes/No",
+      },
+    ];
+
+    const ws = XLSX.utils.json_to_sheet(templateData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Template");
+
+    XLSX.writeFile(wb, "products_import_template.xlsx");
+  };
+
   // Format date helper
   const formatDate = (dateString) => {
     if (!dateString) return "—";
@@ -75,7 +184,6 @@ const Product = () => {
       <div className="flex items-start gap-3">
         <div className="relative flex-shrink-0">
           <img
-            // Use getImageUrl for the main product image
             src={getImageUrl(item.image)}
             alt={item.name}
             className="h-16 w-16 object-cover rounded-lg border-2 border-gray-200"
@@ -122,12 +230,13 @@ const Product = () => {
         <div className="flex items-center gap-2">
           <span className="text-xs text-gray-500 w-16">Stock:</span>
           <span
-            className={`text-sm font-semibold ${item.quantity < 10
+            className={`text-sm font-semibold ${
+              item.quantity < 10
                 ? "text-red-600"
                 : item.quantity < 50
-                  ? "text-orange-600"
-                  : "text-green-600"
-              }`}
+                ? "text-orange-600"
+                : "text-green-600"
+            }`}
           >
             {item.quantity}
           </span>
@@ -153,14 +262,16 @@ const Product = () => {
   // Badge component
   const renderBadge = (value) => (
     <span
-      className={`inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full ${value
+      className={`inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full ${
+        value
           ? "bg-green-50 text-green-700 ring-1 ring-green-600/20"
           : "bg-gray-50 text-gray-600 ring-1 ring-gray-300/50"
-        }`}
+      }`}
     >
       <span
-        className={`h-1.5 w-1.5 rounded-full mr-1.5 ${value ? "bg-green-500" : "bg-gray-400"
-          }`}
+        className={`h-1.5 w-1.5 rounded-full mr-1.5 ${
+          value ? "bg-green-500" : "bg-gray-400"
+        }`}
       />
       {value ? "Yes" : "No"}
     </span>
@@ -179,10 +290,9 @@ const Product = () => {
           <div className="flex items-center gap-1.5 text-xs">
             <span className="text-gray-500">Expires:</span>
             <span
-              className={`font-medium ${isExpiringSoon(item.date_of_expiery)
-                  ? "text-red-600"
-                  : "text-gray-700"
-                }`}
+              className={`font-medium ${
+                isExpiringSoon(item.date_of_expiery) ? "text-red-600" : "text-gray-700"
+              }`}
             >
               {formatDate(item.date_of_expiery)}
             </span>
@@ -251,16 +361,16 @@ const Product = () => {
       filterable: false,
       render: (_, item) => renderFeatures(item),
     },
-
   ];
 
   if (loading) return <Loader />;
-  if (error) return (
-    <div className="p-6 bg-red-50 border border-red-200 rounded-lg">
-      <p className="text-red-600 font-medium">Error loading products</p>
-      <p className="text-red-500 text-sm mt-1">{error}</p>
-    </div>
-  );
+  if (error)
+    return (
+      <div className="p-6 bg-red-50 border border-red-200 rounded-lg">
+        <p className="text-red-600 font-medium">Error loading products</p>
+        <p className="text-red-500 text-sm mt-1">{error}</p>
+      </div>
+    );
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -269,9 +379,12 @@ const Product = () => {
         columns={columns}
         title="Product Management"
         onAdd={() => alert("Add new product clicked!")}
-
-        onEdit={(item) => { }} // DataTable handles navigation via editPath
+        onEdit={(item) => {}} // DataTable handles navigation via editPath
         onDelete={(item) => setDeleteTarget(item)}
+        onBulkDelete={handleBulkDelete}
+        onExport={handleExport}
+        onImport={handleImport}
+        downloadTemplate={downloadTemplate}
         addButtonText="Add Product"
         addPath="add"
         editPath={(item) => `edit/${item._id}`}
@@ -291,7 +404,18 @@ const Product = () => {
         />
       )}
 
-      {/* Variable Prices Dialog (REPLACED) */}
+      {/* Bulk Delete Dialog */}
+      {bulkDeleteIds && (
+        <DeleteDialog
+          title="Delete Multiple Products"
+          message={`Are you sure you want to delete ${bulkDeleteIds.length} product${bulkDeleteIds.length > 1 ? 's' : ''}? This action cannot be undone.`}
+          onConfirm={confirmBulkDelete}
+          onCancel={() => setBulkDeleteIds(null)}
+          loading={bulkDeleting}
+        />
+      )}
+
+      {/* Variable Prices Dialog */}
       {priceDialogProduct && (
         <VariablePricesDialog
           product={priceDialogProduct}
