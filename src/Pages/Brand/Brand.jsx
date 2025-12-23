@@ -128,31 +128,37 @@ const Brand = () => {
   };
 
   // Render brand info with logo
-  const renderBrandInfo = (item) => {
-    return (
-      <div className="flex items-start gap-3">
-        <div className="relative flex-shrink-0">
-          {renderLogo(item.logo)}
-        </div>
-        <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-gray-900 text-sm mb-1 truncate">
-            {item.name}
-          </h3>
-          {item.ar_name && (
-            <p className="text-xs text-gray-500 truncate">{item.ar_name}</p>
-          )}
-        </div>
-      </div>
-    );
-  };
+const renderLogoOnly = (url) => {
+  if (!url)
+    return <span className="text-gray-400 text-xs">No Image</span>;
+
+  return (
+    <img
+      src={url}
+      alt="brand logo"
+      className="h-12 w-12 object-cover rounded-lg border"
+    />
+  );
+};
+
 
   const columns = [
     {
       key: "name",
       header: "Brand Details",
       filterable: true,
-      render: (_, item) => renderBrandInfo(item),
     },
+        {
+      key: "ar_name",
+      header: "Brand Arabic",
+      filterable: true,
+    
+    },
+   {
+    key: "logo",
+    header: "Logo",
+    render: (value) => renderLogoOnly(value),
+  },
   ];
 
   if (loading) return <Loader />;

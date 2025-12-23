@@ -51,6 +51,7 @@ export default function PaymentMethodEdit() {
         // ✅ تعديل: مطابقة أسماء الخصائص عند إعداد البيانات الأولية
         setPaymentMethodData({
           name: paymentMethod.name || "",
+          ar_name:paymentMethod.ar_name||"",
           discription: paymentMethod.discription || "", // استخدام discription
           icon: paymentMethod.icon || "", // استخدام icon
            type: paymentMethod.type || "manual",

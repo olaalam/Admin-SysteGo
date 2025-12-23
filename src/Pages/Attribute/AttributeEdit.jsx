@@ -73,7 +73,9 @@ export default function AttributeEdit() {
       if (formData.name !== originalData.name) {
         payload.name = formData.name;
       }
-
+if (formData.ar_name !== originalData.ar_name) {
+  payload.ar_name = formData.ar_name;
+}
       // ✅ شيك لو في أي option اتغير (name أو status)
       const hasOptionsChanged = formData.options.some((opt, idx) => {
         const original = originalData.options[idx];

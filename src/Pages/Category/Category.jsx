@@ -196,7 +196,13 @@ const handleImport = async (file) => {
       key: "name",
       header: "Category Details",
       filterable: true,
-      render: (_, item) => renderCategoryInfo(item),
+
+    },
+        {
+      key: "ar_name",
+      header: "Category Arabic",
+      filterable: true,
+
     },
     {
       key: "parentId",
