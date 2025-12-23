@@ -32,6 +32,7 @@ const menuItems = [
       { name: "Attribute", path: "/attribute" },
        { name: "Unit", path: "/unit" },
       { name: "Barcode", path: "/barcode" },
+      {name:"Taxes" ,path:"/taxes"},
     ],
   },
   {

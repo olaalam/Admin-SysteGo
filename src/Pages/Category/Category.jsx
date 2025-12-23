@@ -7,6 +7,7 @@ import DeleteDialog from "@/components/DeleteForm";
 import useGet from "@/hooks/useGet";
 import useDelete from "@/hooks/useDelete";
 import { toast } from "react-toastify";
+import usePost from "@/hooks/usePost";
 
 const Category = () => {
   const { data, loading, error, refetch } = useGet("/api/admin/category");
@@ -15,6 +16,7 @@ const Category = () => {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [bulkDeleteIds, setBulkDeleteIds] = useState(null);
   const [bulkDeleting, setBulkDeleting] = useState(false);
+const { postData, loading: importing } = usePost("/api/admin/category/import");
 
   const categories = data?.categories || [];
 
@@ -75,32 +77,32 @@ const Category = () => {
     XLSX.writeFile(wb, `categories_${new Date().toISOString().slice(0,10)}.xlsx`);
   };
 
-  const handleImport = async (file) => {
-    if (!file) return;
+const handleImport = async (file) => {
+  if (!file) return;
 
-    try {
-      const data = await file.arrayBuffer();
-      const workbook = XLSX.read(data, { type: "array" });
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = XLSX.utils.sheet_to_json(sheet);
+  // 1. إنشاء الـ FormData
+  const formData = new FormData();
+  
+  // تأكد أن المفتاح "file" يطابق تماماً ما يتوقعه الباك إند (كما رأينا في Postman)
+  formData.append("file", file); 
 
-      console.log("Imported categories data:", jsonData);
+  try {
+    // 2. إرسال البيانات مع تحديد الـ Headers
+    // نمرر الـ formData كأول باراميتر (body)
+    // والـ config كالتالث باراميتر لضبط الـ headers
+    await postData(formData, null, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
 
-      toast.info(`Read ${jsonData.length} row${jsonData.length > 1 ? 's' : ''} from file. (API integration pending)`);
-
-      // Here you should make an API call for bulk import
-      // await fetch("/api/admin/category/import", {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify({ categories: jsonData }),
-      // });
-
-      refetch();
-    } catch (err) {
-      console.error("Import failed:", err);
-      toast.error("Failed to read Excel file");
-    }
-  };
+    // 3. تحديث الجدول بعد النجاح
+    refetch();
+    console.log("Import successful");
+  } catch (err) {
+    console.error("Import error:", err);
+  }
+};
 
   const downloadTemplate = () => {
     const templateData = [
@@ -231,6 +233,7 @@ const Category = () => {
         onBulkDelete={handleBulkDelete}
         onExport={handleExport}
         onImport={handleImport}
+        loading={loading || importing}
         downloadTemplate={downloadTemplate}
         addButtonText="Add Category"
         addPath="add"

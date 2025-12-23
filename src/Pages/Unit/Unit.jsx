@@ -140,7 +140,7 @@ const Unit = () => {
       toast.success("Status updated successfully!");
       refetch();
     } catch (err) {
-      toast.error("Failed to update status");
+      toast.error("Failed to update status",err);
     } finally {
       setUpdatingId(null);
     }

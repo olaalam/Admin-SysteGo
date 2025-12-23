@@ -9,6 +9,7 @@ import VariablePricesDialog from "@/components/VariablePricesDialog";
 import useGet from "@/hooks/useGet";
 import useDelete from "@/hooks/useDelete";
 import { toast } from "react-toastify";
+import usePost from "@/hooks/usePost";
 
 const Product = () => {
   const { data, loading, error, refetch } = useGet("/api/admin/product");
@@ -18,7 +19,7 @@ const Product = () => {
   const [bulkDeleteIds, setBulkDeleteIds] = useState(null);
   const [priceDialogProduct, setPriceDialogProduct] = useState(null);
   const [bulkDeleting, setBulkDeleting] = useState(false);
-
+const { postData, loading: importing } = usePost("/api/admin/product/import");
   // Helper function to fix image URLs (kept for renderProductInfo)
   const getImageUrl = (imageStr) => {
     if (!imageStr) return "";
@@ -108,32 +109,32 @@ const Product = () => {
     XLSX.writeFile(wb, `products_${new Date().toISOString().slice(0,10)}.xlsx`);
   };
 
-  const handleImport = async (file) => {
-    if (!file) return;
+const handleImport = async (file) => {
+  if (!file) return;
 
-    try {
-      const data = await file.arrayBuffer();
-      const workbook = XLSX.read(data, { type: "array" });
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = XLSX.utils.sheet_to_json(sheet);
+  // 1. إنشاء الـ FormData
+  const formData = new FormData();
+  
+  // تأكد أن المفتاح "file" يطابق تماماً ما يتوقعه الباك إند (كما رأينا في Postman)
+  formData.append("file", file); 
 
-      alert(`تم قراءة ${jsonData.length} صف من الملف\n(سيتم تطبيق الإرسال للباك إند لاحقاً)`);
+  try {
+    // 2. إرسال البيانات مع تحديد الـ Headers
+    // نمرر الـ formData كأول باراميتر (body)
+    // والـ config كالتالث باراميتر لضبط الـ headers
+    await postData(formData, null, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
 
-      console.log("Imported products data:", jsonData);
-
-      // هنا يفضل عمل API call للـ bulk import
-      // await fetch("/api/admin/product/import", {
-      //   method: "POST",
-      //   body: JSON.stringify({ products: jsonData }),
-      // });
-
-      refetch();
-    } catch (err) {
-      console.error("Import failed:", err);
-      alert("حدث خطأ أثناء قراءة ملف الاكسيل");
-    }
-  };
-
+    // 3. تحديث الجدول بعد النجاح
+    refetch();
+    console.log("Import successful");
+  } catch (err) {
+    console.error("Import error:", err);
+  }
+};
   const downloadTemplate = () => {
     const templateData = [
       {
@@ -384,6 +385,7 @@ const Product = () => {
         onBulkDelete={handleBulkDelete}
         onExport={handleExport}
         onImport={handleImport}
+        loading={loading || importing}
         downloadTemplate={downloadTemplate}
         addButtonText="Add Product"
         addPath="add"

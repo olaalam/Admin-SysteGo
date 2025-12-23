@@ -44,6 +44,9 @@ import UnitEdit from "./Pages/Unit/UnitEdit";
 import Expenses from "./Pages/ExpensesCategory/Expenses";
 import ExpensesAdd from "./Pages/ExpensesCategory/ExpensesAdd";
 import ExpensesEdit from "./Pages/ExpensesCategory/ExpensesEdit";
+import Taxes from "./Pages/Taxes/Taxes";
+import TaxesAdd from "./Pages/Taxes/TaxesAdd";
+import TaxesEdit from "./Pages/Taxes/TaxesEdit";
 export default function AppRoutes() {
   return (
     <Routes>
@@ -405,6 +408,33 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute>
               <ExpensesEdit />
+            </ProtectedRoute>
+          }
+        />
+      </Route>
+            {/* ✅ Taxes (Nested Routes محمية) */}
+      <Route path="taxes">
+        <Route
+          index
+          element={
+            <ProtectedRoute>
+              <Taxes />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="add"
+          element={
+            <ProtectedRoute>
+              <TaxesAdd />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="edit/:id"
+          element={
+            <ProtectedRoute>
+              <TaxesEdit />
             </ProtectedRoute>
           }
         />
