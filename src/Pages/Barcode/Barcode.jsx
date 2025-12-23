@@ -242,13 +242,13 @@ const PrintBarcode = () => {
               </div>
 
               {/* Camera Button */}
-              <button
-                onClick={() => setShowCamera(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 rounded-lg flex items-center gap-2"
-              >
-                <Scan className="w-5 h-5" />
-                Open Camera
-              </button>
+<button
+  onClick={() => setShowCamera(true)} // التأكد من أن الحالة هي showCamera
+  className="bg-blue-600 hover:bg-blue-700 text-white px-4 rounded-lg flex items-center gap-2"
+>
+  <Scan className="w-5 h-5" />
+  Open Camera
+</button>
             </div>
           </div>
 
