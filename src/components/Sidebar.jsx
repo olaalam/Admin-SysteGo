@@ -106,6 +106,7 @@ const menuItems = [
     children: [
       { name: "Admin", path: "/admin" },
       { name: "Supplier", path: "/supplier" },
+       { name: "Permission", path: "/permission" },
     ],
   },
   {

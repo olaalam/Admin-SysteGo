@@ -6,6 +6,7 @@ import api from "@/api/api";
 import { toast } from "react-toastify";
 import Loader from "@/components/Loader";
 import AddPage from "@/components/AddPage";
+import useGet from "@/hooks/useGet";
 
 export default function AdminEdit() {
   const { id } = useParams();
@@ -14,39 +15,45 @@ export default function AdminEdit() {
   const { putData, loading: updating } = usePut(`/api/admin/admin/${id}`);
 
   const [adminData, setAdminData] = useState(null);
-  const [positions, setPositions] = useState([]);
   const [fetching, setFetching] = useState(true);
-  const [selectedPosition, setSelectedPosition] = useState(null);
 
-  // 🟢 تحميل بيانات الـ admin + الـ positions
+  /* =======================
+     Warehouses
+  ======================= */
+  const { data: warehousesData } = useGet("/api/admin/admin/selection");
+
+  const warehouseOptions = useMemo(() => {
+    return (
+      warehousesData?.warehouse?.map((w) => ({
+        label: w.name,
+        value: w._id,
+      })) || []
+    );
+  }, [warehousesData]);
+
+  /* =======================
+     Fetch Admin
+  ======================= */
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchAdmin = async () => {
       try {
-        // 1️⃣ جلب بيانات الأدمن
         const res = await api.get(`/api/admin/admin/${id}`);
         const admin = res.data?.data?.user || res.data?.data || res.data;
 
-        // 2️⃣ جلب قائمة الـ positions
-        const posRes = await api.get("/api/admin/admin");
-        const fetchedPositions = posRes.data?.data?.positions || [];
-
-        setPositions(fetchedPositions);
-
-        // 3️⃣ إيجاد الـ position الحالي للأدمن
-        const currentPosition =
-          fetchedPositions.find((p) => p._id === admin.positionId?._id) || null;
-
-        setSelectedPosition(currentPosition);
+        if (!admin) {
+          toast.error("Admin not found");
+          navigate("/admin");
+          return;
+        }
 
         setAdminData({
           username: admin.username || "",
           email: admin.email || "",
-          role: admin.role || "",
+          role: admin.role || "admin",
           company_name: admin.company_name || "",
           phone: admin.phone || "",
           password: "",
-          status: admin.status || false,
-          positionId: currentPosition?._id || "",
+warehouse_id: admin.warehouse_id?._id || "",
         });
       } catch (err) {
         toast.error("Failed to fetch admin data");
@@ -56,63 +63,81 @@ export default function AdminEdit() {
       }
     };
 
-    fetchData();
-  }, [id]);
+    fetchAdmin();
+  }, [id, navigate]);
 
-  // 🟡 الحقول
-  const fields = useMemo(() => {
-    const positionOptions = positions.map((pos) => ({
-      label: pos.name,
-      value: pos._id,
-    }));
-
-    const roleOptions = [
-      { label: "Admin", value: "admin" },
-      { label: "Super Admin", value: "superadmin" },
-    ];
-
-    return [
-      { key: "username", label: "Name", required: true },
-      { key: "email", label: "Email", required: true },
-      { key: "company_name", label: "Company Name", required: true },
-      { key: "password", label: "Password", type: "password" },
-      { key: "phone", label: "Phone", required: true },
+  /* =======================
+     Fields
+  ======================= */
+  const fields = useMemo(
+    () => [
       {
-        key: "positionId",
-        label: "Position",
-        type: "select",
+        key: "username",
+        label: "Username",
+        type: "text",
         required: true,
-        options: positionOptions,
-        value: selectedPosition?._id || "",
-        // 🟢 منع الريفريش هنا
-        onChange: (value) => {
-          const found = positions.find((p) => p._id === value);
-          setSelectedPosition(found);
-          setAdminData((prev) => ({
-            ...prev,
-            positionId: found?._id || "",
-          }));
-        },
+      },
+      {
+        key: "email",
+        label: "Email",
+        type: "email",
+        required: true,
+      },
+      {
+        key: "company_name",
+        label: "Company Name",
+        type: "text",
+        required: true,
+      },
+
+      {
+        key: "phone",
+        label: "Phone",
+        type: "text",
+        required: true,
       },
       {
         key: "role",
         label: "Role",
         type: "select",
         required: true,
-        options: roleOptions,
+        options: [
+          { label: "Admin", value: "admin" },
+          { label: "Super Admin", value: "superadmin" },
+        ],
       },
-    ];
-  }, [positions, selectedPosition]);
+      {
+        key: "warehouse_id",
+        label: "Warehouse",
+        type: "select",
+        required: true,
+        options: warehouseOptions,
+      },
+    ],
+    [warehouseOptions]
+  );
 
-  // 🟣 عند الحفظ
+  /* =======================
+     Submit
+  ======================= */
   const handleSubmit = async (formData) => {
     try {
       const payload = {
-        ...formData,
-        positionId: formData.positionId || selectedPosition?._id,
+        username: formData.username,
+        email: formData.email,
+        role: formData.role,
+        company_name: formData.company_name,
+        phone: formData.phone,
+        warehouse_id: formData.warehouse_id, // ✅ الاسم الصح
       };
 
+      // ابعت الباسورد فقط لو مكتوب
+      if (formData.password) {
+        payload.password = formData.password;
+      }
+
       await putData(payload);
+
       toast.success("Admin updated successfully!");
       navigate("/admin");
     } catch (err) {
@@ -121,12 +146,7 @@ export default function AdminEdit() {
         err.response?.data?.message ||
         "Failed to update admin";
 
-      const details = err.response?.data?.error?.details;
-      if (details && Array.isArray(details)) {
-        details.forEach((d) => toast.error(d));
-      } else {
-        toast.error(errorMessage);
-      }
+      toast.error(errorMessage);
       console.error("❌ Error:", err.response?.data);
     }
   };
@@ -139,14 +159,15 @@ export default function AdminEdit() {
     <div className="p-6 bg-gray-100 min-h-screen">
       {adminData && (
         <AddPage
-          key={adminData.positionId || "edit-admin"}
-          title={`Edit admin: ${adminData.username || "..."}`}
-          description="Update admin details"
+          key="edit-admin"
+          title={`Edit Admin: ${adminData.username}`}
+          description="Update administrator details"
           fields={fields}
           initialData={adminData}
           onSubmit={handleSubmit}
           onCancel={handleCancel}
           loading={updating}
+          submitButtonText="Update Admin"
         />
       )}
     </div>

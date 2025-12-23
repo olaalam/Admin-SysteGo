@@ -46,9 +46,17 @@ export default function DataTable({
     let filtered = [...safeData];
     if (searchTerm) {
       filtered = filtered.filter((item) =>
-        Object.values(item).some((value) =>
-          value?.toString().toLowerCase().includes(searchTerm.toLowerCase())
-        )
+Object.values(item).some((value) => {
+  if (typeof value === "object" && value !== null) {
+    return value.name
+      ?.toLowerCase()
+      .includes(searchTerm.toLowerCase());
+  }
+  return value
+    ?.toString()
+    .toLowerCase()
+    .includes(searchTerm.toLowerCase());
+})
       );
     }
     Object.entries(selectedFilters).forEach(([key, value]) => {
@@ -162,7 +170,7 @@ export default function DataTable({
             {onImport && (
               <label className="flex items-center gap-1.5 px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
                 <Upload size={16} />
-                <span className="hidden sm:inline">Import</span>
+                <span className="hidden sm:inline">Export</span>
                 <input
                   type="file"
                   accept=".xlsx,.xls,.csv"
@@ -184,7 +192,7 @@ export default function DataTable({
                 title="Export to Excel"
               >
                 <Download size={16} />
-                <span className="hidden sm:inline">Export</span>
+                <span className="hidden sm:inline">Import</span>
               </button>
             )}
           </div>
@@ -361,9 +369,12 @@ export default function DataTable({
                           key={column.key}
                           className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
                         >
-                          {column.render
-                            ? column.render(item[column.key], item)
-                            : item[column.key]}
+{column.render
+  ? column.render(item[column.key], item)
+  : typeof item[column.key] === "object" && item[column.key] !== null
+    ? item[column.key].name ?? "-"
+    : item[column.key]}
+
                         </td>
                       ))}
 

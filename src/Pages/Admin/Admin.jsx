@@ -26,15 +26,18 @@ const Admin = () => {
     };
 
 
+const columns = [
+  { key: "username", header: "Name", filterable: true },
+  { key: "email", header: "Email", filterable: true },
+  { key: "role", header: "Role", filterable: true },
+  { key: "company_name", header: "Company Name", filterable: true },
+  {
+    key: "warehouse_id",
+    header: "Warehouse",
+    filterable: true,
+  },
+];
 
-    const columns = [
-        { key: "username", header: "Name", filterable: true },
-        { key: "email", header: "Email", filterable: true },
-        { key: "role", header: "Role", filterable: true },
-        { key: "company_name", header: "Company Name", filterable: true },
-
-
-    ];
 
 
     if (loading) return <Loader />;
@@ -61,8 +64,8 @@ const Admin = () => {
             {deleteTarget && (
                 <DeleteDialog
                     title="Delete admin"
-                    message={`Are you sure you want to delete admin "${deleteTarget.code || deleteTarget.name
-                        }"?`}
+message={`Are you sure you want to delete admin "${deleteTarget.username}"?`}
+
                     onConfirm={() => handleDelete(deleteTarget)}
                     onCancel={() => setDeleteTarget(null)}
                     loading={deleting}

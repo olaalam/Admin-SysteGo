@@ -47,6 +47,8 @@ import ExpensesEdit from "./Pages/ExpensesCategory/ExpensesEdit";
 import Taxes from "./Pages/Taxes/Taxes";
 import TaxesAdd from "./Pages/Taxes/TaxesAdd";
 import TaxesEdit from "./Pages/Taxes/TaxesEdit";
+import PermissionEdit from "./Pages/Permission/PermissionEdit";
+import Permission from "./Pages/Permission/Permission";
 export default function AppRoutes() {
   return (
     <Routes>
@@ -435,6 +437,25 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute>
               <TaxesEdit />
+            </ProtectedRoute>
+          }
+        />
+      </Route>
+                  {/* ✅ permission (Nested Routes محمية) */}
+      <Route path="permission">
+        <Route
+          index
+          element={
+            <ProtectedRoute>
+              <Permission />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="edit/:id"
+          element={
+            <ProtectedRoute>
+              <PermissionEdit />
             </ProtectedRoute>
           }
         />
