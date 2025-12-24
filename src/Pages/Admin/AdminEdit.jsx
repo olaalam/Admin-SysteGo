@@ -20,51 +20,46 @@ export default function AdminEdit() {
   /* =======================
      Warehouses
   ======================= */
-  const { data: warehousesData } = useGet("/api/admin/admin/selection");
+const { data: selectionData } = useGet("/api/admin/admin/selection");
 
-  const warehouseOptions = useMemo(() => {
-    return (
-      warehousesData?.warehouse?.map((w) => ({
-        label: w.name,
-        value: w._id,
-      })) || []
-    );
-  }, [warehousesData]);
+const warehouseOptions = selectionData?.warehouses?.map(w => ({ label: w.name, value: w.id })) || [];
+const roleOptions = selectionData?.roles?.map(r => ({ label: r.name, value: r.id })) || [];
 
   /* =======================
      Fetch Admin
   ======================= */
-  useEffect(() => {
-    const fetchAdmin = async () => {
-      try {
-        const res = await api.get(`/api/admin/admin/${id}`);
-        const admin = res.data?.data?.user || res.data?.data || res.data;
+useEffect(() => {
+  const fetchAdmin = async () => {
+    try {
+      const res = await api.get(`/api/admin/admin/${id}`);
+      const admin = res.data?.data?.user;
 
-        if (!admin) {
-          toast.error("Admin not found");
-          navigate("/admin");
-          return;
-        }
-
-        setAdminData({
-          username: admin.username || "",
-          email: admin.email || "",
-          role: admin.role || "admin",
-          company_name: admin.company_name || "",
-          phone: admin.phone || "",
-          password: "",
-warehouse_id: admin.warehouse_id?._id || "",
-        });
-      } catch (err) {
-        toast.error("Failed to fetch admin data");
-        console.error("❌ Error fetching admin:", err);
-      } finally {
-        setFetching(false);
+      if (!admin) {
+        toast.error("Admin not found");
+        navigate("/admin");
+        return;
       }
-    };
 
-    fetchAdmin();
-  }, [id, navigate]);
+      setAdminData({
+        username: admin.username || "",
+        email: admin.email || "",
+        company_name: admin.company_name || "",
+        phone: admin.phone || "",
+        password: "",
+        role_id: admin.role_id?.id || "",
+        warehouse_id: admin.warehouse?.id || "",
+      });
+    } catch (err) {
+      toast.error("Failed to fetch admin data");
+      console.error("❌ Error fetching admin:", err);
+    } finally {
+      setFetching(false);
+    }
+  };
+
+  fetchAdmin();
+}, [id, navigate]);
+
 
   /* =======================
      Fields
@@ -97,14 +92,12 @@ warehouse_id: admin.warehouse_id?._id || "",
         required: true,
       },
       {
-        key: "role",
+        key: "role_id",
         label: "Role",
         type: "select",
         required: true,
-        options: [
-          { label: "Admin", value: "admin" },
-          { label: "Super Admin", value: "superadmin" },
-        ],
+ options: roleOptions,
+
       },
       {
         key: "warehouse_id",
@@ -114,7 +107,7 @@ warehouse_id: admin.warehouse_id?._id || "",
         options: warehouseOptions,
       },
     ],
-    [warehouseOptions]
+    [selectionData]
   );
 
   /* =======================
@@ -122,14 +115,16 @@ warehouse_id: admin.warehouse_id?._id || "",
   ======================= */
   const handleSubmit = async (formData) => {
     try {
-      const payload = {
-        username: formData.username,
-        email: formData.email,
-        role: formData.role,
-        company_name: formData.company_name,
-        phone: formData.phone,
-        warehouse_id: formData.warehouse_id, // ✅ الاسم الصح
-      };
+const payload = {
+  username: formData.username,
+  email: formData.email,
+  company_name: formData.company_name,
+  phone: formData.phone,
+  role_id: formData.role_id,
+  warehouse_id: formData.warehouse_id,
+};
+if (formData.password) payload.password = formData.password;
+
 
       // ابعت الباسورد فقط لو مكتوب
       if (formData.password) {

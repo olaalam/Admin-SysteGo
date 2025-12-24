@@ -10,75 +10,64 @@ const AdminAdd = () => {
   const navigate = useNavigate();
 
   const { postData, loading: submitting } = usePost("/api/admin/admin");
-const { data: warehousesData } = useGet("/api/admin/admin/selection");
+const { data: selectionData } = useGet("/api/admin/admin/selection");
 
-const warehouseOptions = useMemo(() => {
-  return (
-    warehousesData?.warehouse?.map((w) => ({
-      label: w.name,
-      value: w._id,
-    })) || []
-  );
-}, [warehousesData]);
+const warehouseOptions = selectionData?.warehouses?.map(w => ({ label: w.name, value: w.id })) || [];
+const roleOptions = selectionData?.roles?.map(r => ({ label: r.name, value: r.id })) || [];
+
   /* =======================
      Form Fields
   ======================= */
-  const fields = useMemo(
-    () => [
-      {
-        key: "username",
-        label: "Username",
-        type: "text",
-        required: true,
-        placeholder: "e.g. seddek",
-      },
-      {
-        key: "email",
-        label: "Email",
-        type: "email",
-        required: true,
-        placeholder: "e.g. admin@mail.com",
-      },
-      {
-        key: "password",
-        label: "Password",
-        type: "password",
-        required: true,
-      },
-      {
-        key: "company_name",
-        label: "Company Name",
-        type: "text",
-        required: true,
-        placeholder: "e.g. Wego",
-      },
-      {
-        key: "phone",
-        label: "Phone",
-        type: "text",
-        required: true,
-        placeholder: "e.g. 01234567899",
-      },
-      {
-        key: "role",
-        label: "Role",
-        type: "select",
-        required: true,
-        options: [
-          { label: "Admin", value: "admin" },
-          { label: "Super Admin", value: "superadmin" },
-        ],
-      },
-          {
+const fields = useMemo(
+  () => [
+    {
+      key: "username",
+      label: "Username",
+      type: "text",
+      required: true,
+    },
+    {
+      key: "email",
+      label: "Email",
+      type: "email",
+      required: true,
+    },
+    {
+      key: "password",
+      label: "Password",
+      type: "password",
+      required: true,
+    },
+    {
+      key: "company_name",
+      label: "Company Name",
+      type: "text",
+      required: true,
+    },
+    {
+      key: "phone",
+      label: "Phone",
+      type: "text",
+      required: true,
+    },
+    {
+      key: "role_id",
+      label: "Role",
+      type: "select",
+      required: true,
+ options: roleOptions,
+    },
+    {
       key: "warehouse_id",
       label: "Warehouse",
       type: "select",
       required: true,
       options: warehouseOptions,
     },
-    ],
-    []
-  );
+  ],
+  [warehouseOptions]
+);
+
 
   /* =======================
      Submit
@@ -89,10 +78,11 @@ const handleSubmit = async (formData) => {
       username: formData.username,
       email: formData.email,
       password: formData.password,
-      role: formData.role,
-      company_name: formData.company_name,
       phone: formData.phone,
-      warehouse_id: formData.warehouse_id, // 👈 مهم
+      company_name: formData.company_name,
+      role_id: formData.role_id,       // ✅ صح
+      warehouse_id: formData.warehouse_id,
+      status: "active",                // ✅ مهم
     };
 
     await postData(payload);
@@ -105,6 +95,7 @@ const handleSubmit = async (formData) => {
     );
   }
 };
+
 
 
   return (
