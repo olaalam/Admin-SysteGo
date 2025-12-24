@@ -64,6 +64,7 @@ const menuItems = [
     icon: Wallet,
     children: [
       { name: "List", path: "/expense" },
+        { name: "ExpensesCategory", path: "/expense-category" },
     ],
   },
   {

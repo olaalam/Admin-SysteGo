@@ -41,9 +41,9 @@ import PaymentMethodEdit from "./Pages/PaymentMethod/PaymentMethodEdit";
 import Unit from "./Pages/Unit/Unit";
 import UnitAdd from "./Pages/Unit/UnitAdd";
 import UnitEdit from "./Pages/Unit/UnitEdit";
-import Expenses from "./Pages/ExpensesCategory/Expenses";
-import ExpensesAdd from "./Pages/ExpensesCategory/ExpensesAdd";
-import ExpensesEdit from "./Pages/ExpensesCategory/ExpensesEdit";
+import ExpensesCategory from "./Pages/ExpensesCategory/ExpensesCategory";
+import ExpensesCategoryAdd from "./Pages/ExpensesCategory/ExpensesCategoryAdd";
+import ExpensesCategoryEdit from "./Pages/ExpensesCategory/ExpensesCategoryEdit";
 import Taxes from "./Pages/Taxes/Taxes";
 import TaxesAdd from "./Pages/Taxes/TaxesAdd";
 import TaxesEdit from "./Pages/Taxes/TaxesEdit";
@@ -55,6 +55,9 @@ import TransferEdit from "./Pages/Transfer/TransferEdit";
 import Revenue from "./Pages/Revenue/Revenue";
 import RevenueAdd from "./Pages/Revenue/RevenueAdd";
 import RevenueEdit from "./Pages/Revenue/RevenueEdit";
+import Expenses from "./Pages/Expenses/Expenses";
+import ExpensesAdd from "./Pages/Expenses/ExpensesAdd";
+import ExpensesEdit from "./Pages/Expenses/ExpensesEdit";
 export default function AppRoutes() {
   return (
     <Routes>
@@ -393,13 +396,13 @@ export default function AppRoutes() {
           }
         />
       </Route>
-      {/* ✅ Expenses (Nested Routes محمية) */}
-      <Route path="expense">
+      {/* ✅ Expenses-Category (Nested Routes محمية) */}
+      <Route path="expense-category">
         <Route
           index
           element={
             <ProtectedRoute>
-              <Expenses />
+              <ExpensesCategory />
             </ProtectedRoute>
           }
         />
@@ -407,7 +410,7 @@ export default function AppRoutes() {
           path="add"
           element={
             <ProtectedRoute>
-              <ExpensesAdd />
+              <ExpensesCategoryAdd />
             </ProtectedRoute>
           }
         />
@@ -415,7 +418,7 @@ export default function AppRoutes() {
           path="edit/:id"
           element={
             <ProtectedRoute>
-              <ExpensesEdit />
+              <ExpensesCategoryEdit />
             </ProtectedRoute>
           }
         />
@@ -516,6 +519,33 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute>
               <RevenueEdit />
+            </ProtectedRoute>
+          }
+        />
+      </Route>
+            {/* ✅ Expenses (Nested Routes محمية) */}
+      <Route path="expense">
+        <Route
+          index
+          element={
+            <ProtectedRoute>
+              <Expenses />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="add"
+          element={
+            <ProtectedRoute>
+              <ExpensesAdd />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="edit/:id"
+          element={
+            <ProtectedRoute>
+              <ExpensesEdit />
             </ProtectedRoute>
           }
         />

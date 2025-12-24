@@ -9,7 +9,7 @@ import api from "@/api/api";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 
-const Expenses = () => {
+const ExpensesCategory = () => {
   const { data, loading, error, refetch } = useGet("/api/admin/expenseCategory");
   const { deleteData, loading: deleting } = useDelete("/api/admin/expenseCategory");
   
@@ -121,4 +121,4 @@ const Expenses = () => {
   );
 };
 
-export default Expenses;
+export default ExpensesCategory;
