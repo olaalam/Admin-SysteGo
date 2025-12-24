@@ -61,6 +61,9 @@ import ExpensesEdit from "./Pages/Expenses/ExpensesEdit";
 import Popup from "./Pages/Popup/Popup";
 import PopupAdd from "./Pages/Popup/PopupAdd";
 import PopupEdit from "./Pages/Popup/PopupEdit";
+import Pandel from "./Pages/Pandels/Pandel";
+import PandelAdd from "./Pages/Pandels/PandelAdd";
+import PandelEdit from "./Pages/Pandels/PandelEdit";
 export default function AppRoutes() {
   return (
     <Routes>
@@ -576,6 +579,33 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute>
               <PopupEdit />
+            </ProtectedRoute>
+          }
+        />
+      </Route>
+                        {/* ✅ Pandel (Nested Routes محمية) */}
+      <Route path="pandel">
+        <Route
+          index
+          element={
+            <ProtectedRoute>
+              <Pandel />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="add"
+          element={
+            <ProtectedRoute>
+              <PandelAdd />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="edit/:id"
+          element={
+            <ProtectedRoute>
+              <PandelEdit />
             </ProtectedRoute>
           }
         />

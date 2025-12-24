@@ -33,6 +33,8 @@ const menuItems = [
        { name: "Unit", path: "/unit" },
       { name: "Barcode", path: "/barcode" },
       {name:"Taxes" ,path:"/taxes"},
+        {name:"Pandels" ,path:"/pandel"},
+
     ],
   },
   {

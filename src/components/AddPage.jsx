@@ -14,6 +14,7 @@ const AddPage = ({
   initialData = {},
   loading = false,
   className = "",
+  submitButtonText = "Save"
 }) => {
   const [formData, setFormData] = useState({});
 
@@ -57,7 +58,6 @@ const AddPage = ({
     }
   };
 
-  // ✅ كل الـ array logic محفوظة بالكامل
   const handleArrayChange = (key, index, subKey, value) => {
     const newArray = [...(formData[key] || [])];
     newArray[index] = { ...newArray[index], [subKey]: value };
@@ -100,7 +100,7 @@ const AddPage = ({
       };
       reader.readAsDataURL(file);
     } catch (error) {
-      toast.error("Failed to read image file",error);
+      toast.error("Failed to read image file", error);
     }
   };
 
@@ -110,26 +110,25 @@ const AddPage = ({
         toast.error(`Please select at least one ${field.label}`);
         return;
       }
-if (
-  field.required &&
-  field.type === "image" &&
-  (!formData[field.key] || typeof formData[field.key] !== "string")
-) {
-  toast.error(`Please upload ${field.label}`);
-  return;
-}
-
-if (
-  field.required &&
-  field.type !== "image" &&
-  field.type !== "checkbox" &&
-  field.type !== "switch" &&
-  !formData[field.key]
-) {
-  toast.error(`Please fill in ${field.label}`);
-  return;
-}
-
+      if (
+        field.required &&
+        field.type === "image" &&
+        (!formData[field.key] || typeof formData[field.key] !== "string")
+      ) {
+        toast.error(`Please upload ${field.label}`);
+        return;
+      }
+      if (
+        field.required &&
+        field.type !== "image" &&
+        field.type !== "checkbox" &&
+        field.type !== "switch" &&
+        field.type !== "custom" &&
+        !formData[field.key]
+      ) {
+        toast.error(`Please fill in ${field.label}`);
+        return;
+      }
     }
 
     if (formData.from && formData.to) {
@@ -161,14 +160,21 @@ if (
       <div className="p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {fields.map((field) => (
-            <div key={field.key} className="space-y-2">
+            <div 
+              key={field.key} 
+              className={`space-y-2 ${field.type === 'custom' ? 'md:col-span-2' : ''}`}
+            >
               <label className="block text-sm font-medium text-gray-700">
                 {field.label}{" "}
                 {field.required && <span className="text-red-500">*</span>}
               </label>
 
-              {/* Array Field (محفوظ كامل) */}
-              {field.type === "array" ? (
+              {/* Custom Field Type */}
+              {field.type === "custom" ? (
+                <div className="w-full">
+                  {field.render && field.render(formData, setFormData)}
+                </div>
+              ) : field.type === "array" ? (
                 <div className="space-y-3">
                   {(formData[field.key] || []).map((item, idx) => (
                     <div
@@ -264,7 +270,6 @@ if (
                   )}
                 </div>
               ) : field.type === "switch" ? (
-                // ✅ الـ Switch الرئيسي (للحقول العادية)
                 <div className="flex items-center space-x-3">
                   <Switch
                     checked={!!formData[field.key]}
@@ -283,15 +288,43 @@ if (
                     className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
                   />
                 </div>
+) : field.type === "date" ? (
+  <input
+    type="date"
+    value={formData[field.key] ?? ""}
+    onChange={(e) => {
+      const value = e.target.value;
+      handleChange(field.key, value);
+
+      // Validation ديناميكي للـ start / end date
+      if (field.key === "enddate" && formData.startdate) {
+        if (new Date(value) < new Date(formData.startdate)) {
+          toast.error("End Date cannot be earlier than Start Date");
+          handleChange(field.key, ""); // يمسح القيمة غير الصحيحة
+        }
+      }
+      if (field.key === "startdate" && formData.enddate) {
+        if (new Date(value) > new Date(formData.enddate)) {
+          toast.error("Start Date cannot be later than End Date");
+          handleChange(field.key, ""); // يمسح القيمة غير الصحيحة
+        }
+      }
+    }}
+    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+    min={field.min}
+    max={field.max}
+  />
+
               ) : (
-                // Default: text, number, textarea
                 <input
                   type={field.type || "text"}
                   value={formData[field.key] ?? ""}
                   onChange={(e) => handleChange(field.key, e.target.value)}
                   placeholder={field.placeholder || `Enter ${field.label}`}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                  {...(field.type === "textarea" ? { rows: field.rows || 4 } : {})}
+                  min={field.min}
+                  max={field.max}
+                  step={field.step}
                 />
               )}
             </div>
@@ -314,7 +347,7 @@ if (
             disabled={loading}
             className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-medium disabled:bg-gray-400"
           >
-            {loading ? "Saving..." : "Save"}
+            {loading ? "Saving..." : submitButtonText}
           </button>
         </div>
       </div>
