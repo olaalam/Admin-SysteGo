@@ -58,6 +58,9 @@ import RevenueEdit from "./Pages/Revenue/RevenueEdit";
 import Expenses from "./Pages/Expenses/Expenses";
 import ExpensesAdd from "./Pages/Expenses/ExpensesAdd";
 import ExpensesEdit from "./Pages/Expenses/ExpensesEdit";
+import Popup from "./Pages/Popup/Popup";
+import PopupAdd from "./Pages/Popup/PopupAdd";
+import PopupEdit from "./Pages/Popup/PopupEdit";
 export default function AppRoutes() {
   return (
     <Routes>
@@ -546,6 +549,33 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute>
               <ExpensesEdit />
+            </ProtectedRoute>
+          }
+        />
+      </Route>
+                  {/* ✅ Popup (Nested Routes محمية) */}
+      <Route path="popup">
+        <Route
+          index
+          element={
+            <ProtectedRoute>
+              <Popup />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="add"
+          element={
+            <ProtectedRoute>
+              <PopupAdd />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="edit/:id"
+          element={
+            <ProtectedRoute>
+              <PopupEdit />
             </ProtectedRoute>
           }
         />

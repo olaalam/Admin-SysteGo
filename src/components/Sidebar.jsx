@@ -114,7 +114,7 @@ const menuItems = [
     icon: FileText,
     children: [
       { name: "List", path: "/reports/list" },
-      { name: "Add", path: "/reports/add" },
+      { name: "Popup", path: "/popup" },
     ],
   },
   { name: "Addons", icon: Puzzle, path: "/addons" },
