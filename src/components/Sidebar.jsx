@@ -67,11 +67,10 @@ const menuItems = [
     ],
   },
   {
-    name: "Income",
+    name: "Revenue",
     icon: Handshake,
     children: [
-      { name: "List", path: "/income/list" },
-      { name: "Add", path: "/income/add" },
+      { name: "List", path: "/revenue" },
     ],
   },
   {

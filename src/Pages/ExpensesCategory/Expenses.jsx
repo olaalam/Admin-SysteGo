@@ -35,7 +35,7 @@ const Expenses = () => {
       toast.success("Status updated successfully!");
       refetch();
     } catch (err) {
-      toast.error("Failed to update status");
+      toast.error("Failed to update status",err);
     } finally {
       setUpdatingId(null);
     }
@@ -57,47 +57,7 @@ const Expenses = () => {
     </label>
   );
 
-  // Render expense category info
-  const renderCategoryInfo = (item) => {
-    return (
-      <div className="space-y-1">
-        <h3 className="font-semibold text-gray-900 text-sm">
-          {item.name}
-        </h3>
-        {item.ar_name && (
-          <p className="text-xs text-gray-600">{item.ar_name}</p>
-        )}
-      </div>
-    );
-  };
 
-  // Render created date
-  const renderCreatedDate = (item) => {
-    const date = new Date(item.createdAt);
-    return (
-      <div className="text-sm text-gray-700">
-        {date.toLocaleDateString("en-GB", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-        })}
-      </div>
-    );
-  };
-
-  // Render updated date
-  const renderUpdatedDate = (item) => {
-    const date = new Date(item.updatedAt);
-    return (
-      <div className="text-sm text-gray-700">
-        {date.toLocaleDateString("en-GB", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-        })}
-      </div>
-    );
-  };
 
   const columns = [
     {

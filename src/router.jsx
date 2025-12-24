@@ -49,6 +49,12 @@ import TaxesAdd from "./Pages/Taxes/TaxesAdd";
 import TaxesEdit from "./Pages/Taxes/TaxesEdit";
 import PermissionEdit from "./Pages/Permission/PermissionEdit";
 import Permission from "./Pages/Permission/Permission";
+import Transfer from "./Pages/Transfer/Transfer";
+import TransferAdd from "./Pages/Transfer/TransferAdd";
+import TransferEdit from "./Pages/Transfer/TransferEdit";
+import Revenue from "./Pages/Revenue/Revenue";
+import RevenueAdd from "./Pages/Revenue/RevenueAdd";
+import RevenueEdit from "./Pages/Revenue/RevenueEdit";
 export default function AppRoutes() {
   return (
     <Routes>
@@ -334,7 +340,7 @@ export default function AppRoutes() {
           }
         />
       </Route>
-            {/* ✅ PaymentMethod (Nested Routes محمية) */}
+      {/* ✅ PaymentMethod (Nested Routes محمية) */}
       <Route path="payment_method">
         <Route
           index
@@ -361,7 +367,7 @@ export default function AppRoutes() {
           }
         />
       </Route>
-            <Route path="unit">
+      <Route path="unit">
         <Route
           index
           element={
@@ -387,7 +393,7 @@ export default function AppRoutes() {
           }
         />
       </Route>
-            {/* ✅ Expenses (Nested Routes محمية) */}
+      {/* ✅ Expenses (Nested Routes محمية) */}
       <Route path="expense">
         <Route
           index
@@ -414,7 +420,7 @@ export default function AppRoutes() {
           }
         />
       </Route>
-            {/* ✅ Taxes (Nested Routes محمية) */}
+      {/* ✅ Taxes (Nested Routes محمية) */}
       <Route path="taxes">
         <Route
           index
@@ -441,7 +447,7 @@ export default function AppRoutes() {
           }
         />
       </Route>
-                  {/* ✅ permission (Nested Routes محمية) */}
+      {/* ✅ permission (Nested Routes محمية) */}
       <Route path="permission">
         <Route
           index
@@ -456,6 +462,60 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute>
               <PermissionEdit />
+            </ProtectedRoute>
+          }
+        />
+      </Route>
+      {/* Transfer */}
+      <Route path="transfer">
+        <Route
+          index
+          element={
+            <ProtectedRoute>
+              <Transfer />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="add"
+          element={
+            <ProtectedRoute>
+              <TransferAdd />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="edit/:id"
+          element={
+            <ProtectedRoute>
+              <TransferEdit />
+            </ProtectedRoute>
+          }
+        />
+      </Route>
+      {/* Revenue */}
+      <Route path="revenue">
+        <Route
+          index
+          element={
+            <ProtectedRoute>
+              <Revenue />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="add"
+          element={
+            <ProtectedRoute>
+              <RevenueAdd />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="edit/:id"
+          element={
+            <ProtectedRoute>
+              <RevenueEdit />
             </ProtectedRoute>
           }
         />
