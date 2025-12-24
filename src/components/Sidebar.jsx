@@ -30,11 +30,10 @@ const menuItems = [
       { name: "Category", path: "/category" },
       { name: "Brand", path: "/brand" },
       { name: "Attribute", path: "/attribute" },
-       { name: "Unit", path: "/unit" },
+      { name: "Unit", path: "/unit" },
       { name: "Barcode", path: "/barcode" },
-      {name:"Taxes" ,path:"/taxes"},
-        {name:"Pandels" ,path:"/pandel"},
-
+      { name: "Taxes", path: "/taxes" },
+      { name: "Pandels", path: "/pandel" },
     ],
   },
   {
@@ -66,15 +65,13 @@ const menuItems = [
     icon: Wallet,
     children: [
       { name: "List", path: "/expense" },
-        { name: "ExpensesCategory", path: "/expense-category" },
+      { name: "ExpensesCategory", path: "/expense-category" },
     ],
   },
   {
     name: "Revenue",
     icon: Handshake,
-    children: [
-      { name: "List", path: "/revenue" },
-    ],
+    children: [{ name: "List", path: "/revenue" }],
   },
   {
     name: "Quotation",
@@ -108,7 +105,8 @@ const menuItems = [
     children: [
       { name: "Admin", path: "/admin" },
       { name: "Supplier", path: "/supplier" },
-       { name: "Permission", path: "/permission" },
+      { name: "Customer", path: "/customer" },
+      { name: "Permission", path: "/permission" },
     ],
   },
   {
@@ -126,6 +124,7 @@ const menuItems = [
     children: [
       { name: "List", path: "/manufacturing/list" },
       { name: "WareHouse", path: "/warehouse" },
+
     ],
   },
   {
@@ -186,7 +185,7 @@ export default function Sidebar() {
       const itemsToOpen = filteredMenuItems
         .filter((item) => item.children && item.children.length > 0)
         .map((item) => item.name);
-      
+
       if (itemsToOpen.length > 0) {
         // Open the first matching parent
         setOpenDropdown(itemsToOpen[0]);
@@ -222,24 +221,25 @@ export default function Sidebar() {
                   <ChevronDown className="w-4 h-4" />
                 ))}
             </div>
-            {(!desktopCollapsed || isMobile) && (shouldBeOpen || openDropdown === item.name) && (
-              <ul className="pl-8">
-                {item.children.map((child, childIndex) => (
-                  <li key={childIndex}>
-                    <Link
-                      to={child.path}
-                      className="flex items-center p-2 rounded-lg hover:bg-gray-100 transition-colors text-sm"
-                      onClick={() => {
-                        setMobileOpen(false);
-                        setSearchQuery(""); // Clear search after navigation
-                      }}
-                    >
-                      {child.name}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
+            {(!desktopCollapsed || isMobile) &&
+              (shouldBeOpen || openDropdown === item.name) && (
+                <ul className="pl-8">
+                  {item.children.map((child, childIndex) => (
+                    <li key={childIndex}>
+                      <Link
+                        to={child.path}
+                        className="flex items-center p-2 rounded-lg hover:bg-gray-100 transition-colors text-sm"
+                        onClick={() => {
+                          setMobileOpen(false);
+                          setSearchQuery(""); // Clear search after navigation
+                        }}
+                      >
+                        {child.name}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
           </li>
         );
       } else {

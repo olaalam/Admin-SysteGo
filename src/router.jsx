@@ -64,6 +64,11 @@ import PopupEdit from "./Pages/Popup/PopupEdit";
 import Pandel from "./Pages/Pandels/Pandel";
 import PandelAdd from "./Pages/Pandels/PandelAdd";
 import PandelEdit from "./Pages/Pandels/PandelEdit";
+import Customer from "./Pages/Customer/Customer";
+import CustomerAdd from "./Pages/Customer/CustomerAdd";
+import CustomerEdit from "./Pages/Customer/CustomerEdit";
+import ProductWarehouse from "./Pages/ProductWarehouse/ProductWarehouse";
+import ProductWarehouseAdd from "./Pages/ProductWarehouse/ProductWarehouseAdd";
 export default function AppRoutes() {
   return (
     <Routes>
@@ -529,7 +534,7 @@ export default function AppRoutes() {
           }
         />
       </Route>
-            {/* ✅ Expenses (Nested Routes محمية) */}
+      {/* ✅ Expenses (Nested Routes محمية) */}
       <Route path="expense">
         <Route
           index
@@ -556,7 +561,7 @@ export default function AppRoutes() {
           }
         />
       </Route>
-                  {/* ✅ Popup (Nested Routes محمية) */}
+      {/* ✅ Popup (Nested Routes محمية) */}
       <Route path="popup">
         <Route
           index
@@ -583,7 +588,7 @@ export default function AppRoutes() {
           }
         />
       </Route>
-                        {/* ✅ Pandel (Nested Routes محمية) */}
+      {/* ✅ Pandel (Nested Routes محمية) */}
       <Route path="pandel">
         <Route
           index
@@ -610,6 +615,53 @@ export default function AppRoutes() {
           }
         />
       </Route>
+      {/* ✅ Customer (Nested Routes محمية) */}
+      <Route path="customer">
+        <Route
+          index
+          element={
+            <ProtectedRoute>
+              <Customer />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="add"
+          element={
+            <ProtectedRoute>
+              <CustomerAdd />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="edit/:id"
+          element={
+            <ProtectedRoute>
+              <CustomerEdit />
+            </ProtectedRoute>
+          }
+        />
+      </Route>
+      {/* ✅ ProductWarehouse (Nested Routes محمية) */}
+<Route path="product-warehouse">
+  <Route
+    path=":id"
+    element={
+      <ProtectedRoute>
+        <ProductWarehouse />
+      </ProtectedRoute>
+    }
+  />
+  <Route
+    path="add"
+    element={
+      <ProtectedRoute>
+        <ProductWarehouseAdd />
+      </ProtectedRoute>
+    }
+  />
+</Route>
+
       <Route
         path="barcode"
         element={
