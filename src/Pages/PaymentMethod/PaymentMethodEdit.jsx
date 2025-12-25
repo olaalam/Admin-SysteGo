@@ -22,7 +22,7 @@ export default function PaymentMethodEdit() {
     { key: "name", label: "Name", required: true },
         {key:"ar_name",label:"Arabic Name",required:true},
 
-    { key: "discription", label: "Description", required: false }, // تغيير إلى discription
+    { key: "discription", label: "Description", required: true }, // تغيير إلى discription
     { key: "icon", label: "Icon / Logo", type: "image", required: true }, 
           {
         key: "type",

@@ -4,7 +4,6 @@ import * as XLSX from "xlsx";
 import DataTable from "@/components/DataTable";
 import Loader from "@/components/Loader";
 import DeleteDialog from "@/components/DeleteForm";
-// Import the new component
 import VariablePricesDialog from "@/components/VariablePricesDialog";
 import useGet from "@/hooks/useGet";
 import useDelete from "@/hooks/useDelete";
@@ -14,36 +13,36 @@ import usePost from "@/hooks/usePost";
 const Product = () => {
   const { data, loading, error, refetch } = useGet("/api/admin/product");
   const { deleteData, loading: deleting } = useDelete("/api/admin/product/delete");
+  
+  // ✅ FIX: غيّر من [] لـ null
+  const [searchedProduct, setSearchedProduct] = useState(null);
 
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [bulkDeleteIds, setBulkDeleteIds] = useState(null);
   const [priceDialogProduct, setPriceDialogProduct] = useState(null);
   const [bulkDeleting, setBulkDeleting] = useState(false);
-const { postData, loading: importing } = usePost("/api/admin/product/import");
-  // Helper function to fix image URLs (kept for renderProductInfo)
+  const { postData, loading: importing } = usePost("/api/admin/product/import");
+
+  const { postData: searchByCode, loading: searchingByCode } =
+    usePost("/api/admin/product/code");
+
+  // Helper function to fix image URLs
   const getImageUrl = (imageStr) => {
     if (!imageStr) return "";
-
-    // If it's already a full URL, return as is
     if (imageStr.startsWith("http://") || imageStr.startsWith("https://")) {
       return imageStr;
     }
-
-    // If it's a data URI, return as is
     if (imageStr.startsWith("data:")) {
       return imageStr;
     }
-
-    // If it's a base64 string without prefix, add it
     if (imageStr.match(/^[A-Za-z0-9+/=]+$/)) {
       return `data:image/jpeg;base64,${imageStr}`;
     }
-
-    // Otherwise return as is
     return imageStr;
   };
 
-  const products = data?.products || [];
+  // ✅ FIX: الآن هيشتغل صح
+  const products = searchedProduct ?? data?.products ?? [];
 
   const handleDelete = async (item) => {
     try {
@@ -54,7 +53,33 @@ const { postData, loading: importing } = usePost("/api/admin/product/import");
     }
   };
 
-  // Bulk delete with the required body format
+  // ✅ FIX: عدّل الـ search function
+  const handleSearchByCode = async (value) => {
+    // ✅ امسح البحث السابق
+    if (!value || value.trim() === "") {
+      setSearchedProduct(null);
+      return;
+    }
+
+    try {
+      const res = await searchByCode({ code: value });
+      const product = res?.data?.product;
+
+      if (product) {
+        setSearchedProduct([product]);
+        toast.success("Product found");
+      } else {
+        setSearchedProduct([]);
+        toast.error("Product not found");
+      }
+    } catch (err) {
+      setSearchedProduct([]);
+      toast.error("Invalid code");
+      console.error(err);
+    }
+  };
+
+  // Bulk delete
   const handleBulkDelete = async (selectedIds) => {
     if (!selectedIds?.length) return;
     setBulkDeleteIds(selectedIds);
@@ -66,14 +91,11 @@ const { postData, loading: importing } = usePost("/api/admin/product/import");
     setBulkDeleting(true);
 
     try {
-      // Pass the body data with ids array to deleteData
       await deleteData("/api/admin/product", { ids: bulkDeleteIds });
-
       refetch();
       toast.success(`Successfully deleted ${bulkDeleteIds.length} product${bulkDeleteIds.length > 1 ? 's' : ''}`);
     } catch (err) {
       console.error("Bulk delete error:", err);
-      // Error toast is already handled by useDelete hook
     } finally {
       setBulkDeleting(false);
       setBulkDeleteIds(null);
@@ -109,32 +131,26 @@ const { postData, loading: importing } = usePost("/api/admin/product/import");
     XLSX.writeFile(wb, `products_${new Date().toISOString().slice(0,10)}.xlsx`);
   };
 
-const handleImport = async (file) => {
-  if (!file) return;
+  const handleImport = async (file) => {
+    if (!file) return;
 
-  // 1. إنشاء الـ FormData
-  const formData = new FormData();
-  
-  // تأكد أن المفتاح "file" يطابق تماماً ما يتوقعه الباك إند (كما رأينا في Postman)
-  formData.append("file", file); 
+    const formData = new FormData();
+    formData.append("file", file);
 
-  try {
-    // 2. إرسال البيانات مع تحديد الـ Headers
-    // نمرر الـ formData كأول باراميتر (body)
-    // والـ config كالتالث باراميتر لضبط الـ headers
-    await postData(formData, null, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
+    try {
+      await postData(formData, null, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
-    // 3. تحديث الجدول بعد النجاح
-    refetch();
-    console.log("Import successful");
-  } catch (err) {
-    console.error("Import error:", err);
-  }
-};
+      refetch();
+      console.log("Import successful");
+    } catch (err) {
+      console.error("Import error:", err);
+    }
+  };
+
   const downloadTemplate = () => {
     const templateData = [
       {
@@ -159,7 +175,6 @@ const handleImport = async (file) => {
     XLSX.writeFile(wb, "products_import_template.xlsx");
   };
 
-  // Format date helper
   const formatDate = (dateString) => {
     if (!dateString) return "—";
     const date = new Date(dateString);
@@ -170,7 +185,6 @@ const handleImport = async (file) => {
     });
   };
 
-  // Check if expiring soon (within 30 days)
   const isExpiringSoon = (dateString) => {
     if (!dateString) return false;
     const expiryDate = new Date(dateString);
@@ -179,14 +193,16 @@ const handleImport = async (file) => {
     return daysUntilExpiry <= 30 && daysUntilExpiry >= 0;
   };
 
-  // Product info with image
   const renderProductInfo = (item) => {
+    // ✅ تأكد من وجود البيانات قبل الـ render
+    if (!item) return "—";
+
     return (
       <div className="flex items-start gap-3">
         <div className="relative flex-shrink-0">
           <img
             src={getImageUrl(item.image)}
-            alt={item.name}
+            alt={item.name || "Product"}
             className="h-16 w-16 object-cover rounded-lg border-2 border-gray-200"
           />
           {item.quantity < 10 && (
@@ -197,13 +213,15 @@ const handleImport = async (file) => {
         </div>
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-gray-900 text-sm mb-1.5 truncate">
-            {item.name}
+            {item.name || "Unnamed Product"}
           </h3>
           <div className="space-y-1">
             <div className="flex items-center gap-1.5 text-xs">
               <span className="text-gray-500">Category:</span>
               <span className="font-medium text-gray-700">
-                {item.categoryId?.[0]?.name || "—"}
+                {Array.isArray(item.categoryId) 
+                  ? item.categoryId[0]?.name || "—"
+                  : item.categoryId?.name || "—"}
               </span>
             </div>
             <div className="flex items-center gap-1.5 text-xs">
@@ -215,31 +233,33 @@ const handleImport = async (file) => {
           </div>
           <div className="mt-2 flex items-baseline gap-1">
             <span className="text-base font-bold text-teal-600">
-              {item.price} EGP
+             {typeof item.price === "object" ? item.price.price : item.price || 0} EGP
             </span>
-            <span className="text-xs text-gray-500">/ {item.unit}</span>
+            <span className="text-xs text-gray-500">/ {item.unit || "unit"}</span>
           </div>
         </div>
       </div>
     );
   };
 
-  // Inventory info
   const renderInventory = (item) => {
+    // ✅ تأكد من وجود البيانات
+    if (!item) return "—";
+
     return (
       <div className="space-y-2">
         <div className="flex items-center gap-2">
           <span className="text-xs text-gray-500 w-16">Stock:</span>
           <span
             className={`text-sm font-semibold ${
-              item.quantity < 10
+              (item.quantity || 0) < 10
                 ? "text-red-600"
-                : item.quantity < 50
+                : (item.quantity || 0) < 50
                 ? "text-orange-600"
                 : "text-green-600"
             }`}
           >
-            {item.quantity}
+            {item.quantity || 0}
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -260,7 +280,6 @@ const handleImport = async (file) => {
     );
   };
 
-  // Badge component
   const renderBadge = (value) => (
     <span
       className={`inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full ${
@@ -278,7 +297,6 @@ const handleImport = async (file) => {
     </span>
   );
 
-  // Expiration info
   const renderExpiration = (item) => {
     if (!item.exp_ability) {
       return renderBadge(false);
@@ -303,8 +321,10 @@ const handleImport = async (file) => {
     );
   };
 
-  // Features column
   const renderFeatures = (item) => {
+    // ✅ تأكد من وجود البيانات
+    if (!item) return "—";
+
     return (
       <div className="space-y-2">
         <div className="flex items-center gap-2">
@@ -342,7 +362,6 @@ const handleImport = async (file) => {
     );
   };
 
-  // Columns definition
   const columns = [
     {
       key: "name",
@@ -380,11 +399,12 @@ const handleImport = async (file) => {
         columns={columns}
         title="Product Management"
         onAdd={() => alert("Add new product clicked!")}
-        onEdit={(item) => {}} // DataTable handles navigation via editPath
+        onEdit={(item) => {}}
         onDelete={(item) => setDeleteTarget(item)}
         onBulkDelete={handleBulkDelete}
         onExport={handleExport}
         onImport={handleImport}
+        onSearchApi={handleSearchByCode}
         loading={loading || importing}
         downloadTemplate={downloadTemplate}
         addButtonText="Add Product"
@@ -395,7 +415,6 @@ const handleImport = async (file) => {
         filterable={true}
       />
 
-      {/* Delete Dialog */}
       {deleteTarget && (
         <DeleteDialog
           title="Delete Product"
@@ -406,7 +425,6 @@ const handleImport = async (file) => {
         />
       )}
 
-      {/* Bulk Delete Dialog */}
       {bulkDeleteIds && (
         <DeleteDialog
           title="Delete Multiple Products"
@@ -417,7 +435,6 @@ const handleImport = async (file) => {
         />
       )}
 
-      {/* Variable Prices Dialog */}
       {priceDialogProduct && (
         <VariablePricesDialog
           product={priceDialogProduct}

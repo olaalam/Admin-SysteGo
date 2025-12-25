@@ -52,6 +52,17 @@ const Accounting = () => {
       setDeleteTarget(null);
     }
   };
+    const renderIcon = (url) => {
+    if (!url) return <span className="text-gray-400">No Icon</span>;
+    return (
+      <img
+        src={url}
+        alt="Payment Icon"
+        className="h-10 w-10 object-contain rounded border"
+      />
+    );
+  };
+
 
 // ✅ تغيير حالة الحساب (مفعل / غير مفعل) - toggle عادي
 const handleToggleStatus = async (account) => {
@@ -86,7 +97,15 @@ const handleToggleStatus = async (account) => {
 
   const columns = [
     { key: "name", header: "Name", filterable: true },
+{
+  key: "image",
+  header: "Image",
+  filterable: false,
+  render: (_, item) => renderIcon(item.image),
+}
+,
     { key: "balance", header: "Initial Balance", filterable: false },
+
 {
   key: "status",
   header: "Status", // أو "Active" أو "Enabled" حسب المعنى اللي عايزاه

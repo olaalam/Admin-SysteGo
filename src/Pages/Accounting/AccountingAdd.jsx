@@ -4,14 +4,35 @@ import { useNavigate } from "react-router-dom";
 import AddPage from "@/components/AddPage";
 import { toast } from "react-toastify";
 import usePost from "@/hooks/usePost";
+import useGet from "@/hooks/useGet";
+import Loader from "@/components/Loader";
 
 const BankAccountAdd = () => {
   const navigate = useNavigate();
 
-  const { postData, loading: submitting } = usePost(
-    "/api/admin/bank_account/"
-  );
+  // =============================
+  // POST: Add bank account
+  // =============================
+  const { postData, loading: submitting } = usePost("/api/admin/bank_account/");
 
+  // =============================
+  // GET: Warehouses for select
+  // =============================
+  const {
+    data: warehouseData,
+    loading: loadingWarehouses,
+    error,
+  } = useGet("/api/admin/bank_account/select-warehouses");
+
+  const warehouses =
+    warehouseData?.warehouses?.map((w) => ({
+      label: w.name,
+      value: w._id,
+    })) || [];
+
+  // =============================
+  // Form fields
+  // =============================
   const fields = [
     {
       key: "name",
@@ -23,9 +44,10 @@ const BankAccountAdd = () => {
     {
       key: "warehouseId",
       label: "Warehouse",
-      type: "select", // أو combobox حسب AddPage
+      type: "select",
       required: true,
       placeholder: "Select warehouse",
+      options: warehouses, // ✅ جاي من الـ API
     },
     {
       key: "balance",
@@ -44,7 +66,7 @@ const BankAccountAdd = () => {
     {
       key: "image",
       label: "Image",
-      type: "image", // حسب implementation عندك
+      type: "image",
       required: false,
     },
     {
@@ -61,15 +83,19 @@ const BankAccountAdd = () => {
     },
   ];
 
+  // =============================
+  // Submit handler
+  // =============================
   const handleSubmit = async (data) => {
     try {
-      // ✅ هنا البيانات بقت بنفس keys المطلوبة من الـ backend
       const payload = {
         name: data.name,
-        warehouseId: data.warehouseId,
+        warehouseId: Array.isArray(data.warehouseId)
+          ? data.warehouseId
+          : [data.warehouseId],
         image: data.image || null,
         description: data.description || "",
-        balance: String(data.balance), // API مستني string
+        balance: String(data.balance), // backend مستني string
         status: Boolean(data.status),
         in_POS: Boolean(data.in_POS),
       };
@@ -100,6 +126,22 @@ const BankAccountAdd = () => {
 
   const handleCancel = () => navigate("/accounting");
 
+  // =============================
+  // Loading / Error states
+  // =============================
+  if (loadingWarehouses) return <Loader />;
+
+  if (error) {
+    return (
+      <div className="p-6 text-red-600 text-center">
+        Failed to load warehouses
+      </div>
+    );
+  }
+
+  // =============================
+  // Render
+  // =============================
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
       <AddPage

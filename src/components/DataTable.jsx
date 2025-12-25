@@ -12,6 +12,7 @@ import {
   X,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import SmartSearch from "@/components/SmartSearch";
 
 export default function DataTable({
   data = [],
@@ -20,7 +21,7 @@ export default function DataTable({
   onAdd = null,
   onEdit = null,
   onDelete = null,
-  onBulkDelete = null,           // new: optional callback for bulk delete
+  onBulkDelete = null,
   addPath = null,
   editPath = null,
   itemsPerPage = 10,
@@ -29,7 +30,7 @@ export default function DataTable({
   addButtonText = "Add New",
   className = "",
   showActions = true,
-  // New props for import/export/template
+  onSearchApi = null,
   onExport = null,
   onImport = null,
   downloadTemplate = null,
@@ -38,27 +39,28 @@ export default function DataTable({
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFilters, setSelectedFilters] = useState({});
   const [itemsPerPageState, setItemsPerPageState] = useState(itemsPerPage);
-  const [selectedRows, setSelectedRows] = useState(new Set()); // selected item ids
+  const [selectedRows, setSelectedRows] = useState(new Set());
   const navigate = useNavigate();
 
   const safeData = Array.isArray(data) ? data : [];
+
+  // ✅ FIX: لو في onSearchApi، متفلترش local
   const filteredData = useMemo(() => {
     let filtered = [...safeData];
-    if (searchTerm) {
+    
+    // ✅ امنع الـ local search لو في API search
+    if (searchTerm && !onSearchApi) {
       filtered = filtered.filter((item) =>
-Object.values(item).some((value) => {
-  if (typeof value === "object" && value !== null) {
-    return value.name
-      ?.toLowerCase()
-      .includes(searchTerm.toLowerCase());
-  }
-  return value
-    ?.toString()
-    .toLowerCase()
-    .includes(searchTerm.toLowerCase());
-})
+        Object.values(item).some((value) => {
+          if (typeof value === "object" && value !== null) {
+            return value.name?.toLowerCase().includes(searchTerm.toLowerCase());
+          }
+          return value?.toString().toLowerCase().includes(searchTerm.toLowerCase());
+        })
       );
     }
+
+    // Apply column filters
     Object.entries(selectedFilters).forEach(([key, value]) => {
       if (value) {
         filtered = filtered.filter((item) => {
@@ -70,14 +72,15 @@ Object.values(item).some((value) => {
         });
       }
     });
+
     return filtered;
-  }, [safeData, searchTerm, selectedFilters]);
-    const startIndex = (currentPage - 1) * itemsPerPageState;
+  }, [safeData, searchTerm, selectedFilters, onSearchApi]);
+
+  const startIndex = (currentPage - 1) * itemsPerPageState;
   const endIndex = startIndex + itemsPerPageState;
+  const currentData = filteredData.slice(startIndex, endIndex);
 
-    const currentData = filteredData.slice(startIndex, endIndex);
-
-  // ── Selection Helpers ──────────────────────────────────────
+  // Selection helpers
   const toggleRow = (id) => {
     setSelectedRows((prev) => {
       const newSet = new Set(prev);
@@ -92,10 +95,8 @@ Object.values(item).some((value) => {
 
   const toggleSelectAllCurrentPage = () => {
     if (selectedRows.size === currentData.length && currentData.length > 0) {
-      // deselect all in current page
       setSelectedRows(new Set());
     } else {
-      // select all in current page
       const pageIds = currentData.map(item => item.id || item._id).filter(Boolean);
       setSelectedRows(new Set(pageIds));
     }
@@ -122,8 +123,6 @@ Object.values(item).some((value) => {
     return [...new Set(values)];
   };
 
-
-
   const totalPages = Math.ceil(filteredData.length / itemsPerPageState);
 
   const handleFilterChange = (columnKey, value) => {
@@ -139,16 +138,19 @@ Object.values(item).some((value) => {
     setSearchTerm("");
     setCurrentPage(1);
     clearAllSelection();
+    // ✅ امسح الـ search من الـ API
+    if (onSearchApi) {
+      onSearchApi("");
+    }
   };
 
   return (
     <div className={className}>
-      {/* Header with Title and Add Button + Import/Export */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <h2 className="text-2xl font-semibold text-gray-800">{title}</h2>
 
         <div className="flex flex-wrap gap-3 items-center">
-          {/* Import / Export / Template buttons */}
           <div className="flex gap-2 order-1 sm:order-none">
             {downloadTemplate && (
               <button
@@ -170,7 +172,7 @@ Object.values(item).some((value) => {
             {onImport && (
               <label className="flex items-center gap-1.5 px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
                 <Upload size={16} />
-                <span className="hidden sm:inline">Export</span>
+                <span className="hidden sm:inline">Import</span>
                 <input
                   type="file"
                   accept=".xlsx,.xls,.csv"
@@ -178,7 +180,7 @@ Object.values(item).some((value) => {
                   onChange={(e) => {
                     if (e.target.files?.[0]) {
                       onImport(e.target.files[0]);
-                      e.target.value = ""; // reset file input
+                      e.target.value = "";
                     }
                   }}
                 />
@@ -192,7 +194,7 @@ Object.values(item).some((value) => {
                 title="Export to Excel"
               >
                 <Download size={16} />
-                <span className="hidden sm:inline">Import</span>
+                <span className="hidden sm:inline">Export</span>
               </button>
             )}
           </div>
@@ -212,24 +214,26 @@ Object.values(item).some((value) => {
         </div>
       </div>
 
-      {/* Search and Filters Row + Bulk actions */}
+      {/* Search and Filters */}
       <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
         <div className="flex flex-wrap gap-3 items-center">
           {searchable && (
-            <div className="relative flex-1 min-w-64">
-              <Search
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                size={18}
-              />
-              <input
-                type="text"
-                placeholder="Search..."
+            <div className="flex-1 min-w-64">
+              <SmartSearch
                 value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
+                onChange={async (val) => {
+                  setSearchTerm(val);
                   setCurrentPage(1);
+
+                  // ✅ لو في API search
+                  if (onSearchApi) {
+                    try {
+                      await onSearchApi(val); // حتى لو empty string
+                    } catch (err) {
+                      console.error("Search error:", err);
+                    }
+                  }
                 }}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
               />
             </div>
           )}
@@ -243,9 +247,7 @@ Object.values(item).some((value) => {
                   <select
                     key={column.key}
                     value={selectedFilters[column.key] || ""}
-                    onChange={(e) =>
-                      handleFilterChange(column.key, e.target.value)
-                    }
+                    onChange={(e) => handleFilterChange(column.key, e.target.value)}
                     disabled={options.length === 0}
                     className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed text-sm"
                   >
@@ -282,7 +284,6 @@ Object.values(item).some((value) => {
             </button>
           )}
 
-          {/* Bulk selection info & actions */}
           {selectedRows.size > 0 && (
             <div className="flex items-center gap-4 ml-auto sm:ml-0">
               <span className="text-sm text-gray-600 whitespace-nowrap">
@@ -369,12 +370,17 @@ Object.values(item).some((value) => {
                           key={column.key}
                           className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
                         >
-{column.render
-  ? column.render(item[column.key], item)
-  : typeof item[column.key] === "object" && item[column.key] !== null
-    ? item[column.key].name ?? "-"
-    : item[column.key]}
-
+                          {column.render
+                            ? column.render(item[column.key], item)
+                            : (() => {
+                                const value = item[column.key];
+                                // ✅ تأكد من عدم عرض objects مباشرة
+                                if (value === null || value === undefined) return "—";
+                                if (typeof value === "object") {
+                                  return value.name || JSON.stringify(value).slice(0, 50) + "...";
+                                }
+                                return String(value);
+                              })()}
                         </td>
                       ))}
 
@@ -385,10 +391,7 @@ Object.values(item).some((value) => {
                               <button
                                 onClick={() => {
                                   if (editPath) {
-                                    const path =
-                                      typeof editPath === "function"
-                                        ? editPath(item)
-                                        : editPath;
+                                    const path = typeof editPath === "function" ? editPath(item) : editPath;
                                     navigate(path);
                                   } else if (onEdit) {
                                     onEdit(item);
@@ -417,12 +420,7 @@ Object.values(item).some((value) => {
                 })
               ) : (
                 <tr>
-                  <td
-                    colSpan={
-                      columns.length + 2 // + checkbox column + actions column
-                    }
-                    className="px-6 py-16 text-center"
-                  >
+                  <td colSpan={columns.length + 2} className="px-6 py-16 text-center">
                     <div className="flex flex-col items-center justify-center space-y-3">
                       <svg
                         className="w-16 h-16 text-gray-300"
@@ -437,12 +435,8 @@ Object.values(item).some((value) => {
                           d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                         />
                       </svg>
-                      <p className="text-gray-500 font-medium text-lg">
-                        No data available
-                      </p>
-                      {!searchTerm &&
-                       !Object.values(selectedFilters).some((v) => v) &&
-                       onAdd && (
+                      <p className="text-gray-500 font-medium text-lg">No data available</p>
+                      {!searchTerm && !Object.values(selectedFilters).some((v) => v) && onAdd && (
                         <button
                           onClick={() => {
                             if (addPath) navigate(addPath);
@@ -506,9 +500,7 @@ Object.values(item).some((value) => {
                   })}
                 </div>
                 <button
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                  }
+                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                   disabled={currentPage === totalPages}
                   className="p-2 rounded-lg border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
