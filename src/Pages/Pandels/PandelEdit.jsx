@@ -2,11 +2,12 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { toast } from "react-toastify";
+import { X, Trash2 } from "lucide-react"; // إضافة الأيقونات
 import AddPage from "@/components/AddPage";
-import ProductSelector from "@/components/ProductSelector";
 import Loader from "@/components/Loader";
 import useGet from "@/hooks/useGet";
 import usePut from "@/hooks/usePut";
+import SmartSearch from "@/components/SmartSearch"; // استيراد البحث الذكي
 
 const PandelEdit = () => {
   const { id } = useParams();
@@ -22,14 +23,10 @@ const PandelEdit = () => {
   const products = productsData?.products || [];
   const pandel = pandelData?.pandel || {};
 
-  // تحويل ISO Date لـ YYYY-MM-DD
   const formatDate = (isoString) => {
     if (!isoString) return "";
     const d = new Date(isoString);
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
+    return d.toISOString().split('T')[0];
   };
 
   const fields = [
@@ -62,58 +59,129 @@ const PandelEdit = () => {
       step: "0.01"
     },
     {
-      key: "images",
-      label: "Images",
+      key: "productsId",
+      label: "Products Bundle",
       type: "custom",
-      required: false,
+      required: true,
+      render: (formData, setFormData) => {
+        const selectedIds = formData.productsId || [];
+        const selectedProductsList = products.filter(p => selectedIds.includes(p._id || p.id));
+
+        const searchTerm = (formData.searchProduct || "").toLowerCase().trim();
+        const suggestions = searchTerm.length > 0 
+          ? products.filter(p => 
+              (p.name && p.name.toLowerCase().includes(searchTerm)) || 
+              (p.prices?.some(pr => pr.code && pr.code.toString().includes(searchTerm)))
+            ).slice(0, 8)
+          : [];
+
+        return (
+          <div className="space-y-4">
+            <div className="relative z-20">
+              <SmartSearch
+                value={formData.searchProduct || ""}
+                onChange={(val) => setFormData(prev => ({ ...prev, searchProduct: val }))}
+              />
+              
+              {suggestions.length > 0 && (
+                <div className="absolute w-full bg-white border border-gray-200 rounded-lg shadow-xl mt-1 z-50 overflow-hidden">
+                  {suggestions.map((p) => (
+                    <div
+                      key={p._id || p.id}
+                      className="px-4 py-3 hover:bg-purple-50 cursor-pointer flex items-center gap-3 transition-colors border-b last:border-b-0"
+                      onClick={() => {
+                        const prodId = p._id || p.id;
+                        if (!selectedIds.includes(prodId)) {
+                          setFormData(prev => ({
+                            ...prev,
+                            productsId: [...selectedIds, prodId],
+                            searchProduct: "" 
+                          }));
+                          toast.success(`${p.name} added!`);
+                        } else {
+                          toast.warning("Already added!");
+                        }
+                      }}
+                    >
+                      <div className="w-10 h-10 rounded border overflow-hidden bg-gray-50 flex-shrink-0">
+                        <img src={p.image || "/placeholder.png"} alt="" className="w-full h-full object-cover" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-semibold text-gray-700">{p.name}</span>
+                        <span className="text-xs text-gray-400 font-mono">Code: {p.prices?.[0]?.code || 'N/A'}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {selectedProductsList.length > 0 && (
+              <div className="mt-4 border rounded-lg bg-white overflow-hidden shadow-sm">
+                <div className="bg-gray-50 px-4 py-2 border-b text-xs font-bold text-gray-500 uppercase">Selected Items</div>
+                <div className="divide-y divide-gray-100 max-h-[300px] overflow-y-auto">
+                  {selectedProductsList.map((product) => (
+                    <div key={product._id || product.id} className="flex items-center justify-between p-3 hover:bg-gray-50 transition-colors">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-md border overflow-hidden bg-white flex-shrink-0">
+                          <img src={product.image || "/placeholder.png"} alt="" className="w-full h-full object-cover" />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-bold text-gray-800">{product.name}</h4>
+                          <p className="text-xs text-gray-400">Code: {product.prices?.[0]?.code || 'N/A'}</p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newIds = selectedIds.filter(id => id !== (product._id || product.id));
+                          setFormData(prev => ({ ...prev, productsId: newIds }));
+                        }}
+                        className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-all"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      }
+    },
+    {
+      key: "images",
+      label: "Pandel Images",
+      type: "custom",
       render: (formData, setFormData) => (
         <ImageUploadSection 
           images={formData.images || []} 
           onImagesChange={(images) => setFormData(prev => ({ ...prev, images }))}
         />
       )
-    },
-    {
-      key: "productsId",
-      label: "Products",
-      type: "custom",
-      required: true,
-      render: (formData, setFormData) => (
-        <ProductSelector
-          products={products}
-          selectedProducts={formData.productsId || []}
-          onProductsChange={(products) => setFormData(prev => ({ ...prev, productsId: products }))}
-          label="Add Products to Pandel"
-          showQuantity={false}
-        />
-      )
     }
   ];
-const toBase64 = (url) => {
-  return fetch(url)
-    .then(res => res.blob())
-    .then(blob => new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result.split(',')[1]); // ناخد بس Base64 بدون data:image/...
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    }));
-};
-  const handleSubmit = async (formData) => {
-    // Validation
-    if (!formData.name?.trim()) return toast.error("Please enter pandel name");
-    if (!formData.startdate) return toast.error("Please select start date");
-    if (!formData.enddate) return toast.error("Please select end date");
-    if (new Date(formData.enddate) < new Date(formData.startdate)) return toast.error("End Date cannot be earlier than Start Date");
-    if (!formData.price || formData.price <= 0) return toast.error("Please enter valid price");
-    if (!formData.productsId?.length) return toast.error("Please select at least one product");
 
+  const toBase64 = (url) => {
+    return fetch(url)
+      .then(res => res.blob())
+      .then(blob => new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      }));
+  };
+
+  const handleSubmit = async (formData) => {
     setLoading(true);
     try {
-           const imagesBase64 = await Promise.all(formData.images.map(img => {
-      if (img.startsWith("http")) return toBase64(img);
-      return img; // Base64 موجود
-    }));
+      const imagesBase64 = await Promise.all((formData.images || []).map(async (img) => {
+        if (typeof img === "string" && img.startsWith("http")) return await toBase64(img);
+        return img; 
+      }));
+
       const payload = {
         name: formData.name,
         productsId: formData.productsId,
@@ -127,9 +195,7 @@ const toBase64 = (url) => {
       toast.success("Pandel updated successfully!");
       navigate("/pandel");
     } catch (err) {
-      console.error("❌ Error updating pandel:", err);
-      const errorMessage = err.response?.data?.message || "Failed to update pandel";
-      toast.error(errorMessage);
+      toast.error("Failed to update pandel",err);
     } finally {
       setLoading(false);
     }
@@ -139,7 +205,6 @@ const toBase64 = (url) => {
     <div className="p-6 bg-gray-50 min-h-screen">
       <AddPage
         title={`Edit Pandel: ${pandel.name || ""}`}
-        description="Update pandel details"
         fields={fields}
         initialData={{
           name: pandel.name || "",
@@ -147,7 +212,8 @@ const toBase64 = (url) => {
           enddate: formatDate(pandel.enddate),
           price: pandel.price || "",
           productsId: pandel.productsId || [],
-          images: pandel.images || []
+          images: pandel.images || [],
+          searchProduct: ""
         }}
         onSubmit={handleSubmit}
         onCancel={() => navigate("/pandel")}
@@ -158,44 +224,51 @@ const toBase64 = (url) => {
   );
 };
 
-// Image Upload Component (Reuse from Add)
+// مكون رفع الصور (المحسن والمطابق لصفحة الـ Add)
 const ImageUploadSection = ({ images, onImagesChange }) => {
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
-    files.forEach(file => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result.split(',')[1];
-        onImagesChange([...images, base64String]);
-      };
-      reader.readAsDataURL(file);
+    const readers = files.map(file => {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result.split(',')[1]); 
+        reader.readAsDataURL(file);
+      });
     });
+    Promise.all(readers).then(newImages => onImagesChange([...images, ...newImages]));
   };
 
   const removeImage = (index) => onImagesChange(images.filter((_, i) => i !== index));
 
   return (
     <div className="space-y-4">
-      <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-all">
+      <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-white hover:bg-gray-50 transition-all">
         <div className="flex flex-col items-center justify-center pt-5 pb-6">
-          <svg className="w-8 h-8 mb-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-          </svg>
-          <p className="text-sm text-gray-600">Click to upload images</p>
-          <p className="text-xs text-gray-400 mt-1">PNG, JPG up to 10MB</p>
+          <div className="p-2 bg-purple-50 rounded-full mb-2">
+            <svg className="w-6 h-6 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+            </svg>
+          </div>
+          <p className="text-sm text-gray-600"><span className="font-semibold text-purple-600">Click to upload</span></p>
         </div>
         <input type="file" className="hidden" accept="image/*" multiple onChange={handleImageUpload} />
       </label>
 
       {images.length > 0 && (
-        <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-3 md:grid-cols-4 gap-4">
           {images.map((img, index) => (
-            <div key={index} className="relative group">
-              <img src={`data:image/jpeg;base64,${img}`} alt={`Preview ${index + 1}`} className="w-full h-24 object-cover rounded-lg border-2 border-gray-200" />
-              <button type="button" onClick={() => removeImage(index)} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+            <div key={index} className="relative group aspect-square">
+              <img
+                src={img.startsWith("http") ? img : `data:image/jpeg;base64,${img}`}
+                alt=""
+                className="w-full h-full object-cover rounded-lg border shadow-sm"
+              />
+              <button
+                type="button"
+                onClick={() => removeImage(index)}
+                className="absolute -top-2 -right-2 bg-white text-red-500 shadow-md rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <X size={14} />
               </button>
             </div>
           ))}

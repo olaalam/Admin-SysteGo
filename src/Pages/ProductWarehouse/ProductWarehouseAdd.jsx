@@ -2,90 +2,162 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom"; 
 import { toast } from "react-toastify";
+import { Trash2, Package, Search } from "lucide-react"; 
 import AddPage from "@/components/AddPage";
-import ProductSelector from "@/components/ProductSelector"; // هذا المكون يحتوي على البحث
 import Loader from "@/components/Loader";
 import useGet from "@/hooks/useGet";
 import api from "@/api/api";
+import SmartSearch from "@/components/SmartSearch"; 
 
 const ProductWarehouseAdd = () => {
   const navigate = useNavigate();
   const { data: productsData, loading: productsLoading } = useGet("/api/admin/product");
   const [loading, setLoading] = useState(false);
-const warehouseId = localStorage.getItem("currentWarehouseId");
+  
+  // جلب معرف المخزن من localStorage
+  const warehouseId = localStorage.getItem("currentWarehouseId");
   const products = productsData?.products || [];
 
-  // تعريف الحقول بناءً على الـ Body المطلوب
   const fields = [
     {
       key: "productId",
       label: "Select Product",
       type: "custom",
       required: true,
-      // نستخدم ProductSelector للحفاظ على خاصية البحث
-      render: (formData, setFormData) => (
-        <ProductSelector
-          products={products}
-          // ProductSelector يتعامل عادة مع مصفوفة، لذا نحول الـ id إلى مصفوفة للعرض
-          selectedProducts={formData.productId ? [formData.productId] : []} 
-          onProductsChange={(selectedIds) => {
-            // نأخذ آخر عنصر تم اختياره لأننا نريد منتجاً واحداً فقط
-            const singleId = selectedIds.length > 0 ? selectedIds[selectedIds.length - 1] : "";
-            setFormData((prev) => ({ ...prev, productId: singleId }));
-          }}
-          label="Search & Select Product"
-          showQuantity={false}
-        />
-      ),
+      render: (formData, setFormData) => {
+        // العثور على المنتج المختار حالياً من المصفوفة الكاملة
+        const selectedProduct = products.find(p => (p._id || p.id) === formData.productId);
+        
+        // منطق الفلترة للبحث اللحظي
+        const searchTerm = (formData.searchProduct || "").toLowerCase().trim();
+        const suggestions = searchTerm.length > 0 
+          ? products.filter(p => 
+              (p.name && p.name.toLowerCase().includes(searchTerm)) || 
+              (p.prices?.some(pr => pr.code && pr.code.toString().includes(searchTerm)))
+            ).slice(0, 6) // تقليل العدد لشكل أنظف في صفحة المخزن
+          : [];
+
+        return (
+          <div className="space-y-4">
+            {!formData.productId ? (
+              <div className="relative z-30">
+                <SmartSearch
+                  value={formData.searchProduct || ""}
+                  onChange={(val) => setFormData(prev => ({ ...prev, searchProduct: val }))}
+                  placeholder="Scan barcode or type product name..."
+                />
+                
+                {/* قائمة الاقتراحات المنسدلة */}
+                {suggestions.length > 0 && (
+                  <div className="absolute w-full bg-white border border-gray-200 rounded-xl shadow-2xl mt-2 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                    {suggestions.map((p) => (
+                      <div
+                        key={p._id || p.id}
+                        className="px-4 py-3 hover:bg-teal-50 cursor-pointer flex items-center justify-between transition-colors border-b last:border-b-0"
+                        onClick={() => {
+                          setFormData(prev => ({
+                            ...prev,
+                            productId: p._id || p.id,
+                            searchProduct: "" 
+                          }));
+                          toast.info(`Selected: ${p.name}`);
+                        }}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg border bg-gray-50 overflow-hidden flex-shrink-0">
+                            <img 
+                              src={p.image || "/placeholder.png"} 
+                              alt="" 
+                              className="w-full h-full object-cover"
+                              onError={(e) => e.target.src = "https://via.placeholder.com/40"} 
+                            />
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-sm font-bold text-gray-700">{p.name}</span>
+                            <span className="text-xs text-gray-400 font-mono">Code: {p.prices?.[0]?.code || 'N/A'}</span>
+                          </div>
+                        </div>
+                        <div className="text-teal-600">
+                           <Search size={14} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* عرض الكارت عند اختيار منتج */
+              <div className="flex items-center justify-between p-4 bg-white border-2 border-teal-100 rounded-xl shadow-sm animate-in zoom-in-95 duration-200">
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 rounded-xl border-2 border-teal-50 overflow-hidden bg-gray-50 shadow-inner">
+                    <img 
+                      src={selectedProduct?.image || "/placeholder.png"} 
+                      alt="" 
+                      className="w-full h-full object-cover" 
+                    />
+                  </div>
+                  <div>
+                    <h4 className="text-md font-black text-gray-800">{selectedProduct?.name}</h4>
+                    <div className="flex items-center gap-2 mt-1">
+                       <span className="px-2 py-0.5 bg-teal-100 text-teal-700 text-[10px] font-bold rounded-full uppercase">
+                         Selected
+                       </span>
+                       <span className="text-xs text-gray-400 font-mono">
+                         #{selectedProduct?.prices?.[0]?.code || 'No Code'}
+                       </span>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, productId: "" }))}
+                  className="p-2.5 text-red-500 hover:bg-red-50 rounded-full transition-all border border-transparent hover:border-red-100"
+                  title="Remove and change product"
+                >
+                  <Trash2 size={20} />
+                </button>
+              </div>
+            )}
+          </div>
+        );
+      },
     },
     {
       key: "quantity",
-      label: "Quantity",
+      label: "Initial Stock Quantity",
       type: "number",
       required: true,
-      placeholder: "Enter quantity (e.g., 30)",
+      placeholder: "How many pieces are you adding?",
       min: 1,
     },
     {
       key: "low_stock",
-      label: "Low Stock Alert Limit",
+      label: "Low Stock Alert Level",
       type: "number",
       required: true,
-      placeholder: "Enter low stock limit (e.g., 5)",
+      placeholder: "Alert me when stock falls below...",
       min: 0,
     },
   ];
 
   const handleSubmit = async (formData) => {
-    // التحقق من وجود المخزن والمنتج
-    if (!warehouseId) {
-        toast.error("Warehouse ID is missing!");
-        return;
-    }
-    if (!formData.productId) {
-        toast.error("Please select a product!");
-        return;
-    }
+    if (!warehouseId) return toast.error("Critical Error: Warehouse ID not found!");
+    if (!formData.productId) return toast.error("Please select a product first.");
 
     setLoading(true);
     try {
-      // 2. تجهيز البيانات بنفس الشكل المطلوب (JSON Body)
       const payload = {
         productId: formData.productId,
-        warehouseId: warehouseId, // يتم أخذه تلقائياً من الرابط
+        warehouseId: warehouseId,
         quantity: Number(formData.quantity),
         low_stock: Number(formData.low_stock),
       };
 
-      // يرجى التأكد من مسار الـ API الصحيح للإضافة
       await api.post("/api/admin/product_warehouse", payload);
-      
-      toast.success("Product added to warehouse successfully!");
-      navigate(`/product-warehouse/${warehouseId}`); // العودة لصفحة تفاصيل المخزن
+      toast.success("Inventory updated successfully!");
+      navigate(`/product-warehouse/${warehouseId}`);
     } catch (err) {
-      console.error("❌ Error adding product:", err);
-      const errorMessage = err.response?.data?.message || "Failed to add product";
-      toast.error(errorMessage);
+      toast.error(err.response?.data?.message || "Failed to add product to warehouse");
     } finally {
       setLoading(false);
     }
@@ -96,8 +168,8 @@ const warehouseId = localStorage.getItem("currentWarehouseId");
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <AddPage
-        title="Add Product to Warehouse"
-        description="Search for a product and assign stock levels"
+        title="Inventory Entry"
+        description="Register new stock for your warehouse"
         fields={fields}
         onSubmit={handleSubmit}
         onCancel={() => navigate(`/product-warehouse/${warehouseId}`)}
@@ -105,9 +177,10 @@ const warehouseId = localStorage.getItem("currentWarehouseId");
           productId: "",
           quantity: "",
           low_stock: "",
+          searchProduct: ""
         }}
         loading={loading}
-        submitButtonText="Add to Stock"
+        submitButtonText="Confirm Entry"
       />
     </div>
   );

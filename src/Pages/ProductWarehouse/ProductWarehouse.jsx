@@ -1,14 +1,13 @@
 // src/pages/ProductWarehouse.jsx
-import { useEffect } from "react"; // 1. استيراد useEffect
+import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import DataTable from "@/components/DataTable";
 import Loader from "@/components/Loader";
 import useGet from "@/hooks/useGet";
 
 const ProductWarehouse = () => {
-  const { id } = useParams(); // هذا هو ID المخزن
+  const { id } = useParams();
 
-  // 2. تخزين الـ ID في localStorage بمجرد توفره
   useEffect(() => {
     if (id) {
       localStorage.setItem("currentWarehouseId", id);
@@ -25,46 +24,101 @@ const ProductWarehouse = () => {
       key: "name",
       header: "Product Name",
       filterable: true,
-      render: (value) => (
-        <span className="text-gray-700 font-medium">
-          {value}
-        </span>
+      render: (value, row) => (
+        <div className="flex items-center gap-3">
+          {/* إضافة الصورة إذا كانت متوفرة تعطي شكلاً أفضل للجدول */}
+          {row.image && (
+            <img 
+              src={row.image} 
+              className="w-8 h-8 rounded object-cover border" 
+              alt="" 
+            />
+          )}
+          <span className="text-gray-700 font-medium">
+            {value}
+          </span>
+        </div>
       ),
     },
-    { key: "sku", header: "SKU", filterable: true },
-    { key: "price", header: "Price", filterable: false },
-    { key: "quantity", header: "Quantity", filterable: false },
+    { 
+      // استخدام الكود بدلاً من SKU
+      key: "prices", 
+      header: "Product Code", 
+      filterable: true,
+      render: (prices) => (
+        <span className="font-mono text-sm text-blue-600 bg-blue-50 px-2 py-1 rounded">
+          {prices?.[0]?.code || "N/A"}
+        </span>
+      )
+    },
+    { 
+      key: "prices", 
+      header: "Price", 
+      filterable: false,
+      render: (prices) => (
+        <span className="text-green-600 font-bold">
+          {prices?.[0]?.price ? `${prices[0].price} EGP` : "N/A"}
+        </span>
+      )
+    },
+    { 
+      key: "quantity", 
+      header: "In Stock", 
+      filterable: false,
+      render: (value) => (
+        <span className={`px-3 py-1 rounded-full text-xs font-bold ${value > 5 ? 'bg-gray-100 text-gray-700' : 'bg-red-100 text-red-600'}`}>
+          {value} Units
+        </span>
+      )
+    },
   ];
 
   if (loading) return <Loader />;
   if (error) return <div className="p-6 text-red-600 m-auto text-center">{error}</div>;
 
   return (
-    <div className="p-6 bg-gray-100 min-h-screen space-y-6">
+    <div className="p-6 bg-gray-50 min-h-screen space-y-6">
       
-      {/* قسم تفاصيل المخزن */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">{warehouse.name}</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
-          <div><span className="font-semibold text-gray-900">Address:</span> {warehouse.address}</div>
-          <div><span className="font-semibold text-gray-900">Phone:</span> {warehouse.phone}</div>
-          <div><span className="font-semibold text-gray-900">Email:</span> {warehouse.email}</div>
-          <div><span className="font-semibold text-gray-900">Stock Quantity:</span> {warehouse.stock_Quantity}</div>
+      {/* قسم تفاصيل المخزن بشكل أكثر احترافية */}
+      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-teal-50 rounded-full -mr-16 -mt-16 opacity-50"></div>
+        <h2 className="text-2xl font-black text-gray-800 mb-4 flex items-center gap-2">
+          <div className="w-2 h-8 bg-teal-500 rounded-full"></div>
+          {warehouse.name}
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 text-sm">
+          <div className="flex flex-col">
+            <span className="text-gray-400 mb-1">Address</span>
+            <span className="font-semibold text-gray-700">{warehouse.address || "N/A"}</span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-gray-400 mb-1">Phone Number</span>
+            <span className="font-semibold text-gray-700">{warehouse.phone || "N/A"}</span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-gray-400 mb-1">Contact Email</span>
+            <span className="font-semibold text-gray-700">{warehouse.email || "N/A"}</span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-gray-400 mb-1">Capacity</span>
+            <span className="font-bold text-teal-600">{warehouse.stock_Quantity || 0} Total Items</span>
+          </div>
         </div>
       </div>
 
       {/* جدول المنتجات */}
-      <DataTable
-        data={products}
-        columns={columns}
-        title={`Products inside ${warehouse.name || "Warehouse"}`}
-        addButtonText="Add Product to Warehouse"
-        onAdd={() => alert("Add new warehouse clicked!")}
-        addPath={`/product-warehouse/add`} 
-        itemsPerPage={10}
-        searchable={true}
-        filterable={true}
-      />
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
+        <DataTable
+          data={products}
+          columns={columns}
+          title={`Inventory Management`}
+          addButtonText="Add New Product"
+          addPath={`/product-warehouse/add`} 
+          itemsPerPage={10}
+          searchable={true}
+          filterable={true}
+        />
+      </div>
     </div>
   );
 };
