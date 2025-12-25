@@ -46,7 +46,7 @@ const ProductWarehouse = () => {
       header: "Product Code", 
       filterable: true,
       render: (prices) => (
-        <span className="font-mono text-sm text-blue-600 bg-blue-50 px-2 py-1 rounded">
+        <span className="font-mono text-sm text-gray-800 bg-blue-50 px-2 py-1 rounded">
           {prices?.[0]?.code || "N/A"}
         </span>
       )
@@ -56,7 +56,7 @@ const ProductWarehouse = () => {
       header: "Price", 
       filterable: false,
       render: (prices) => (
-        <span className="text-green-600 font-bold">
+        <span className="text-primary font-bold">
           {prices?.[0]?.price ? `${prices[0].price} EGP` : "N/A"}
         </span>
       )
@@ -83,7 +83,7 @@ const ProductWarehouse = () => {
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-32 h-32 bg-teal-50 rounded-full -mr-16 -mt-16 opacity-50"></div>
         <h2 className="text-2xl font-black text-gray-800 mb-4 flex items-center gap-2">
-          <div className="w-2 h-8 bg-teal-500 rounded-full"></div>
+          <div className="w-2 h-8 bg-primary rounded-full"></div>
           {warehouse.name}
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 text-sm">
@@ -101,14 +101,16 @@ const ProductWarehouse = () => {
           </div>
           <div className="flex flex-col">
             <span className="text-gray-400 mb-1">Capacity</span>
-            <span className="font-bold text-teal-600">{warehouse.stock_Quantity || 0} Total Items</span>
+            <span className="font-bold text-primary">{warehouse.stock_Quantity || 0} Total Items</span>
           </div>
         </div>
       </div>
 
       {/* جدول المنتجات */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
+      <div className="bg-white rounded-2xl shadow-sm border p-3 border-gray-100">
         <DataTable
+                onAdd={() => alert("Add new category clicked!")}
+
           data={products}
           columns={columns}
           title={`Inventory Management`}
