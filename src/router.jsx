@@ -69,6 +69,9 @@ import CustomerAdd from "./Pages/Customer/CustomerAdd";
 import CustomerEdit from "./Pages/Customer/CustomerEdit";
 import ProductWarehouse from "./Pages/ProductWarehouse/ProductWarehouse";
 import ProductWarehouseAdd from "./Pages/ProductWarehouse/ProductWarehouseAdd";
+import Cashier from "./Pages/Cashier/Cashier";
+import CashierAdd from "./Pages/Cashier/CashierAdd";
+import CashierEdit from "./Pages/Cashier/CashierEdit";
 export default function AppRoutes() {
   return (
     <Routes>
@@ -381,6 +384,7 @@ export default function AppRoutes() {
           }
         />
       </Route>
+      {/* Unit */}
       <Route path="unit">
         <Route
           index
@@ -661,7 +665,7 @@ export default function AppRoutes() {
     }
   />
 </Route>
-
+{/* Barcode */}
       <Route
         path="barcode"
         element={
@@ -670,6 +674,33 @@ export default function AppRoutes() {
           </ProtectedRoute>
         }
       />
+            {/* Cashier */}
+      <Route path="cashier">
+        <Route
+          index
+          element={
+            <ProtectedRoute>
+              <Cashier />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="add"
+          element={
+            <ProtectedRoute>
+              <CashierAdd />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="edit/:id"
+          element={
+            <ProtectedRoute>
+              <CashierEdit />
+            </ProtectedRoute>
+          }
+        />
+      </Route>
       {/* ❌ 404 - Not Found Route */}
       <Route path="*" element={<NotFoundPage />} />
     </Routes>

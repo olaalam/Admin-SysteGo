@@ -106,6 +106,7 @@ const menuItems = [
       { name: "Admin", path: "/admin" },
       { name: "Supplier", path: "/supplier" },
       { name: "Customer", path: "/customer" },
+      {name:"Cashier",path:"/cashier"},
       { name: "Permission", path: "/permission" },
     ],
   },
