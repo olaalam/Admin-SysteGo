@@ -81,6 +81,9 @@ import DiscountEdit from "./Pages/Discount/DiscountEdit";
 import Currency from "./Pages/Currency/Currency";
 import CurrencyAdd from "./Pages/Currency/CurrencyAdd";
 import CurrencyEdit from "./Pages/Currency/CurrencyEdit";
+import Zone from "./Pages/Zone/Zone";
+import ZoneAdd from "./Pages/Zone/ZoneAdd";
+import ZoneEdit from "./Pages/Zone/ZoneEdit";
 export default function AppRoutes() {
   return (
     <Routes>
@@ -787,6 +790,33 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute>
               <CurrencyEdit />
+            </ProtectedRoute>
+          }
+        />
+      </Route>
+            {/* ✅ Zone (Nested Routes محمية) */}
+      <Route path="zone">
+        <Route
+          index
+          element={
+            <ProtectedRoute>
+              <Zone />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="add"
+          element={
+            <ProtectedRoute>
+              <ZoneAdd />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="edit/:id"
+          element={
+            <ProtectedRoute>
+              <ZoneEdit />
             </ProtectedRoute>
           }
         />

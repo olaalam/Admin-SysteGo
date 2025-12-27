@@ -50,6 +50,7 @@ const menuItems = [
     children: [
       { name: "City", path: "/city" },
       { name: "Country", path: "/country" },
+      { name: "Zone", path: "/zone" },
     ],
   },
   {
