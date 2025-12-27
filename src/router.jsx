@@ -72,6 +72,9 @@ import ProductWarehouseAdd from "./Pages/ProductWarehouse/ProductWarehouseAdd";
 import Cashier from "./Pages/Cashier/Cashier";
 import CashierAdd from "./Pages/Cashier/CashierAdd";
 import CashierEdit from "./Pages/Cashier/CashierEdit";
+import CustomerGroupAdd from "./Pages/CustomerGroup/CustomerGroupAdd";
+import CustomerGroupEdit from "./Pages/CustomerGroup/CustomerGroupEdit";
+import CustomerGroup from "./Pages/CustomerGroup/CustomerGroup";
 export default function AppRoutes() {
   return (
     <Routes>
@@ -646,26 +649,53 @@ export default function AppRoutes() {
           }
         />
       </Route>
+      {/* ✅ CustomerGroup (Nested Routes محمية) */}
+      <Route path="customer-group">
+        <Route
+          index
+          element={
+            <ProtectedRoute>
+              <CustomerGroup />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="add"
+          element={
+            <ProtectedRoute>
+              <CustomerGroupAdd />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="edit/:id"
+          element={
+            <ProtectedRoute>
+              <CustomerGroupEdit />
+            </ProtectedRoute>
+          }
+        />
+      </Route>
       {/* ✅ ProductWarehouse (Nested Routes محمية) */}
-<Route path="product-warehouse">
-  <Route
-    path=":id"
-    element={
-      <ProtectedRoute>
-        <ProductWarehouse />
-      </ProtectedRoute>
-    }
-  />
-  <Route
-    path="add"
-    element={
-      <ProtectedRoute>
-        <ProductWarehouseAdd />
-      </ProtectedRoute>
-    }
-  />
-</Route>
-{/* Barcode */}
+      <Route path="product-warehouse">
+        <Route
+          path=":id"
+          element={
+            <ProtectedRoute>
+              <ProductWarehouse />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="add"
+          element={
+            <ProtectedRoute>
+              <ProductWarehouseAdd />
+            </ProtectedRoute>
+          }
+        />
+      </Route>
+      {/* Barcode */}
       <Route
         path="barcode"
         element={
@@ -674,7 +704,7 @@ export default function AppRoutes() {
           </ProtectedRoute>
         }
       />
-            {/* Cashier */}
+      {/* Cashier */}
       <Route path="cashier">
         <Route
           index

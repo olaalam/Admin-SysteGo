@@ -106,7 +106,8 @@ const menuItems = [
       { name: "Admin", path: "/admin" },
       { name: "Supplier", path: "/supplier" },
       { name: "Customer", path: "/customer" },
-      {name:"Cashier",path:"/cashier"},
+      { name: "CustomerGroup", path: "/customer-group" },
+      { name: "Cashier", path: "/cashier" },
       { name: "Permission", path: "/permission" },
     ],
   },
@@ -248,9 +249,8 @@ export default function Sidebar() {
           <li key={index}>
             <Link
               to={item.path}
-              className={`flex items-center gap-3 p-3 mx-2 rounded-lg hover:bg-gray-100 transition-colors ${
-                desktopCollapsed && !isMobile ? "justify-center" : ""
-              }`}
+              className={`flex items-center gap-3 p-3 mx-2 rounded-lg hover:bg-gray-100 transition-colors ${desktopCollapsed && !isMobile ? "justify-center" : ""
+                }`}
               title={desktopCollapsed && !isMobile ? item.name : ""}
               onClick={() => {
                 setMobileOpen(false);
@@ -323,14 +323,12 @@ export default function Sidebar() {
 
       {/* ✅ Desktop sidebar with toggle */}
       <aside
-        className={`hidden md:block h-screen bg-white border-r transition-all duration-300 flex flex-col overflow-y-auto scrollbar-width-none [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${
-          desktopCollapsed ? "w-16" : "w-64"
-        }`}
+        className={`hidden md:block h-screen bg-white border-r transition-all duration-300 flex flex-col overflow-y-auto scrollbar-width-none [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${desktopCollapsed ? "w-16" : "w-64"
+          }`}
       >
         <div
-          className={`flex items-center p-6 border-b flex-shrink-0 ${
-            desktopCollapsed ? "justify-center" : "justify-start"
-          }`}
+          className={`flex items-center p-6 border-b flex-shrink-0 ${desktopCollapsed ? "justify-center" : "justify-start"
+            }`}
         >
           {desktopCollapsed ? (
             <button
