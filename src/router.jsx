@@ -78,6 +78,9 @@ import CustomerGroup from "./Pages/CustomerGroup/CustomerGroup";
 import Discount from "./Pages/Discount/Discount";
 import DiscountAdd from "./Pages/Discount/DiscountAdd";
 import DiscountEdit from "./Pages/Discount/DiscountEdit";
+import Currency from "./Pages/Currency/Currency";
+import CurrencyAdd from "./Pages/Currency/CurrencyAdd";
+import CurrencyEdit from "./Pages/Currency/CurrencyEdit";
 export default function AppRoutes() {
   return (
     <Routes>
@@ -734,7 +737,7 @@ export default function AppRoutes() {
           }
         />
       </Route>
-            {/* ✅ Discount (Nested Routes محمية) */}
+      {/* ✅ Discount (Nested Routes محمية) */}
       <Route path="discount">
         <Route
           index
@@ -757,6 +760,33 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute>
               <DiscountEdit />
+            </ProtectedRoute>
+          }
+        />
+      </Route>
+      {/* ✅ Currency (Nested Routes محمية) */}
+      <Route path="currency">
+        <Route
+          index
+          element={
+            <ProtectedRoute>
+              <Currency />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="add"
+          element={
+            <ProtectedRoute>
+              <CurrencyAdd />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="edit/:id"
+          element={
+            <ProtectedRoute>
+              <CurrencyEdit />
             </ProtectedRoute>
           }
         />

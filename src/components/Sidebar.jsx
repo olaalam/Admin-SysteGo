@@ -58,6 +58,9 @@ const menuItems = [
     children: [
       { name: "List", path: "/sale/list" },
       { name: "Discount", path: "/discount" },
+      { name: "Currency", path: "/currency" },
+
+
     ],
   },
   {
