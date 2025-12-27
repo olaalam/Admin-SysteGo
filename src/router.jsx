@@ -75,6 +75,9 @@ import CashierEdit from "./Pages/Cashier/CashierEdit";
 import CustomerGroupAdd from "./Pages/CustomerGroup/CustomerGroupAdd";
 import CustomerGroupEdit from "./Pages/CustomerGroup/CustomerGroupEdit";
 import CustomerGroup from "./Pages/CustomerGroup/CustomerGroup";
+import Discount from "./Pages/Discount/Discount";
+import DiscountAdd from "./Pages/Discount/DiscountAdd";
+import DiscountEdit from "./Pages/Discount/DiscountEdit";
 export default function AppRoutes() {
   return (
     <Routes>
@@ -727,6 +730,33 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute>
               <CashierEdit />
+            </ProtectedRoute>
+          }
+        />
+      </Route>
+            {/* ✅ Discount (Nested Routes محمية) */}
+      <Route path="discount">
+        <Route
+          index
+          element={
+            <ProtectedRoute>
+              <Discount />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="add"
+          element={
+            <ProtectedRoute>
+              <DiscountAdd />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="edit/:id"
+          element={
+            <ProtectedRoute>
+              <DiscountEdit />
             </ProtectedRoute>
           }
         />

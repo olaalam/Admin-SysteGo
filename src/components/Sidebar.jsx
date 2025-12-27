@@ -57,7 +57,7 @@ const menuItems = [
     icon: TrendingUp,
     children: [
       { name: "List", path: "/sale/list" },
-      { name: "Add", path: "/sale/add" },
+      { name: "Discount", path: "/discount" },
     ],
   },
   {
