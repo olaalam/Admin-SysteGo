@@ -10,140 +10,94 @@ import usePost from "@/hooks/usePost";
 const CustomerAdd = () => {
   const navigate = useNavigate();
 
-  const [allCountries, setAllCountries] = useState([]);
-  const [allCitiesByCountry, setAllCitiesByCountry] = useState({});
+  const [countries, setCountries] = useState([]);
   const [selectedCountryId, setSelectedCountryId] = useState("");
-  const [fetchingLists, setFetchingLists] = useState(true);
+  const [fetching, setFetching] = useState(true);
 
-  // ✅ endpoint الإضافة
-  const { postData, loading: submitting } = usePost(
-    "/api/admin/customer"
-  );
+  const { postData, loading: submitting } = usePost("/api/admin/customer");
 
-  const availableCities = useMemo(() => {
-    if (!selectedCountryId) return [];
-    return allCitiesByCountry[selectedCountryId] || [];
-  }, [selectedCountryId, allCitiesByCountry]);
-
-  // ✅ الحقول متوافقة مع الريسبونس
-  const fields = useMemo(
-    () => [
-      {
-        key: "name",
-        label: "Customer Name",
-        required: true,
-      },
-      {
-        key: "email",
-        label: "Email",
-        type: "email",
-        required: true,
-      },
-      {
-        key: "phone_number",
-        label: "Phone Number",
-        required: true,
-      },
-      {
-        key: "address",
-        label: "Address",
-        required: true,
-      },
-      {
-        key: "country",
-        label: "Country",
-        type: "select",
-        required: true,
-        options: allCountries.map((country) => ({
-          value: country._id,
-          label: country.name,
-        })),
-        onChange: (value) => {
-          setSelectedCountryId(value);
-        },
-      },
-      {
-        key: "city",
-        label: "City",
-        type: "select",
-        required: true,
-        options: availableCities.map((city) => ({
-          value: city._id,
-          label: city.name,
-        })),
-        disabled:
-          !selectedCountryId ||
-          availableCities.length === 0 ||
-          fetchingLists,
-        placeholder: fetchingLists
-          ? "Loading cities..."
-          : "Select city",
-      },
-      {
-        key: "is_Due",
-        label: "Has Due?",
-        type: "switch",
-        required: true,
-
-      },
-      {
-        key: "amount_Due",
-        label: "Amount Due",
-        type: "number",
-        required: false,
-      },
-    ],
-    [allCountries, availableCities, selectedCountryId, fetchingLists]
-  );
-
-  // ✅ جلب الدول + المدن
+  // 🔹 جلب الدول + المدن مرة واحدة
   useEffect(() => {
-    const fetchLists = async () => {
-      setFetchingLists(true);
+    const fetchCountries = async () => {
+      setFetching(true);
       try {
-        const res = await api.get("/api/admin/countries");
-        const countriesList = res.data?.data || [];
-
-        const citiesByCountry = {};
-        countriesList.forEach((country) => {
-          citiesByCountry[country._id] = country.cities || [];
-        });
-
-        setAllCountries(countriesList);
-        setAllCitiesByCountry(citiesByCountry);
+        const res = await api.get("/api/admin/customer/countries");
+        setCountries(res.data?.data?.countries || []);
       } catch (err) {
         toast.error("Failed to load countries and cities");
         console.error(err);
       } finally {
-        setFetchingLists(false);
+        setFetching(false);
       }
     };
 
-    fetchLists();
+    fetchCountries();
   }, []);
 
-  // ✅ إرسال البيانات (تحويل القيم قبل الإرسال)
+  // 🔹 خيارات الدول
+  const countryOptions = useMemo(() => {
+    return countries.map((c) => ({ label: c.name, value: c._id }));
+  }, [countries]);
+
+  // 🔹 المدن حسب الدولة المختارة
+  const cityOptions = useMemo(() => {
+    const country = countries.find((c) => c._id === selectedCountryId);
+    return country?.cities?.map((city) => ({
+      label: city.name,
+      value: city._id,
+    })) || [];
+  }, [countries, selectedCountryId]);
+
+  // ✅ إعداد الحقول
+  const fields = useMemo(() => [
+    { key: "name", label: "Customer Name", required: true },
+    { key: "email", label: "Email", type: "email", required: true },
+    { key: "phone_number", label: "Phone Number", required: true },
+    { key: "address", label: "Address", required: true },
+    {
+      key: "countryId",
+      label: "Country",
+      type: "select",
+      required: true,
+      options: countryOptions,
+      disabled: fetching,
+      onChange: (value, setFormData) => {
+        setSelectedCountryId(value);
+        setFormData((prev) => ({ ...prev, countryId: value, cityId: "" }));
+      },
+    },
+    {
+      key: "cityId",
+      label: "City",
+      type: "select",
+      required: true,
+      options: cityOptions,
+      disabled: !selectedCountryId || fetching,
+    },
+    { key: "is_Due", label: "Has Due?", type: "switch", required: true },
+    { key: "amount_Due", label: "Amount Due", type: "number", required: false },
+  ], [countryOptions, cityOptions, selectedCountryId, fetching]);
+
+  // ✅ إرسال البيانات
   const handleSubmit = async (formData) => {
     try {
       const payload = {
         ...formData,
-is_Due: Boolean(formData.is_Due),
+        is_Due: Boolean(formData.is_Due),
         amount_Due: Number(formData.amount_Due || 0),
       };
 
       await postData(payload);
-
       toast.success("Customer added successfully 🎉");
       navigate("/customer");
     } catch (err) {
-      const msg =
-        err.response?.data?.message || "Failed to add customer";
+      const msg = err.response?.data?.message || "Failed to add customer";
       toast.error(msg);
       console.error(err.response?.data);
     }
   };
 
-  if (fetchingLists) return <Loader />;
+  if (fetching) return <Loader />;
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
@@ -152,12 +106,9 @@ is_Due: Boolean(formData.is_Due),
         description="Fill in customer information"
         fields={fields}
         onSubmit={handleSubmit}
-        onCancel={() => navigate("/customers")}
+        onCancel={() => navigate("/customer")}
         loading={submitting}
-        initialData={{
-          is_Due: "0",
-          amount_Due: 0,
-        }}
+        initialData={{ is_Due: false, amount_Due: 0, countryId: "", cityId: "" }}
       />
     </div>
   );

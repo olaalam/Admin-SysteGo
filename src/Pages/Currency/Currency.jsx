@@ -4,11 +4,12 @@ import Loader from "@/components/Loader";
 import DeleteDialog from "@/components/DeleteForm";
 import useGet from "@/hooks/useGet";
 import useDelete from "@/hooks/useDelete";
-
+import api from "@/api/api";
+import { toast } from "react-toastify";
 const Currency = () => {
   const { data, loading, error, refetch } = useGet("/api/admin/currency"); // تأكد من الرابط الصحيح
   const { deleteData, loading: deleting } = useDelete("/api/admin/currency/delete");
-
+const [updatingId, setUpdatingId] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
   // تعديل هنا: نستخدم data.currencies بدل countries
@@ -22,13 +23,53 @@ const Currency = () => {
       setDeleteTarget(null);
     }
   };
+  const handleSetDefault = async (item) => {
+  if (item.isdefault) return; // already default
 
-  const columns = [
-    { key: "name", header: "Currency Name", filterable: true },
-    { key: "ar_name", header: "Arabic Name", filterable: true },
-    { key: "isdefault", header: "Default", filterable: true },
-    { key: "amount", header: "Amount", filterable: true },
-  ];
+  setUpdatingId(item._id);
+  try {
+    await api.put(`/api/admin/currency/${item._id}`, {
+      isdefault: true,
+    });
+
+    toast.success("Default currency updated");
+    refetch();
+  } catch (err) {
+    toast.error("Failed to update default currency");
+    console.error(err);
+  } finally {
+    setUpdatingId(null);
+  }
+};
+
+
+const columns = [
+  { key: "name", header: "Currency Name", filterable: true },
+  { key: "ar_name", header: "Arabic Name", filterable: true },
+{
+  key: "isdefault",
+  header: "Default",
+  filterable: false,
+  render: (value, item) => (
+    <label className="relative inline-flex items-center cursor-pointer">
+      <input
+        type="checkbox"
+        checked={!!value}
+        disabled={value || updatingId === item._id}
+        onChange={() => handleSetDefault(item)}
+        className="sr-only peer"
+      />
+      <div className="w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-primary after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
+      {updatingId === item._id && (
+        <span className="ml-2 text-xs text-gray-500">Updating...</span>
+      )}
+    </label>
+  ),
+}
+,
+  { key: "amount", header: "Amount", filterable: true },
+];
+
 
   if (loading) return <Loader />;
   if (error)

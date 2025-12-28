@@ -14,82 +14,120 @@ export default function ZoneEdit() {
 
   const [zoneData, setZoneData] = useState(null);
   const [countries, setCountries] = useState([]);
-  const [cities, setCities] = useState([]);
+  const [selectedCountryId, setSelectedCountryId] = useState("");
   const [fetching, setFetching] = useState(true);
 
-  // جلب بيانات الـ zone والدول والمدن
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await api.get(`/api/admin/zone/${id}`);
-        const zone = res.data?.data?.zone || {};
-        const allCountries = res.data?.data?.countries || [];
-        const allCities = res.data?.data?.cities || [];
+// 🔹 جلب zone + countries (with cities)
+useEffect(() => {
+  const fetchData = async () => {
+    setFetching(true);
+    try {
+      const [zoneRes, countriesRes] = await Promise.all([
+        api.get(`/api/admin/zone/${id}`),
+        api.get(`/api/admin/zone/countries`)
+      ]);
 
-        setCountries(allCountries);
-        setCities(allCities);
+      const zone = zoneRes.data?.data?.zone;
+      const allCountries = countriesRes.data?.data?.countries || [];
 
-        setZoneData({
-          name: zone.name || "",
-          cityId: zone.cityId?._id || "",
-          countryId: zone.countryId?._id || "",
-          cost: zone.cost || 0,
-        });
-      } catch (err) {
-        toast.error("Failed to fetch zone data");
-        console.error("❌ Error fetching zone:", err);
-      } finally {
-        setFetching(false);
-      }
-    };
+      setCountries(allCountries);
 
-    fetchData();
-  }, [id]);
+      const countryId = zone?.countryId?._id || "";
+      setSelectedCountryId(countryId);
 
-  // إعداد الفورم
-  const fields = useMemo(() => [
-    { key: "name", label: "Zone Name", required: true },
-    {
-      key: "cityId",
-      label: "City",
-      type: "select",
-      required: true,
-      options: cities.map((c) => ({ label: c.name, value: c._id })),
+      setZoneData({
+        name: zone?.name || "",
+        ar_name: zone?.ar_name || "",
+        countryId,
+        cityId: zone?.cityId?._id || "",
+        cost: zone?.cost || 0,
+      });
+    } catch (err) {
+      toast.error("Failed to fetch zone data");
+      console.error(err);
+    } finally {
+      setFetching(false);
+    }
+  };
+
+  fetchData();
+}, [id]);
+
+
+  // 🔹 country options
+  const countryOptions = useMemo(() => {
+    return countries.map((c) => ({
+      label: c.name,
+      value: c._id,
+    }));
+  }, [countries]);
+
+  // 🔹 cities based on selected country
+const citiesOptions = useMemo(() => {
+  const selectedCountry = countries.find(
+    (c) => c._id === selectedCountryId
+  );
+
+  return selectedCountry
+    ? selectedCountry.cities.map((city) => ({
+        label: city.name,
+        value: city._id,
+      }))
+    : [];
+}, [countries, selectedCountryId]);
+
+
+  // 🔹 fields
+  const fields = useMemo(
+    () => [
+      { key: "name", label: "Zone Name", required: true },
+      { key: "ar_name", label: "Zone Name(Arabic)", required: true },
+
+  {
+    key: "countryId",
+    label: "Country",
+    type: "select",
+    required: true,
+    options: countries.map((c) => ({
+      label: c.name,
+      value: c._id,
+    })),
+    onChange: (value, setFormData) => {
+      setSelectedCountryId(value);
+      setFormData((prev) => ({ ...prev, cityId: "" }));
     },
-    { key: "cost", label: "Cost", type: "number", required: true },
-    {
-      key: "countryId",
-      label: "Country",
-      type: "select",
-      required: true,
-      options: countries.map((c) => ({ label: c.name, value: c._id })),
-    },
-  ], [cities, countries]);
+  },
 
+  {
+    key: "cityId",
+    label: "City",
+    type: "select",
+    required: true,
+    options: citiesOptions,
+    disabled: !selectedCountryId,
+  },
+
+      { key: "cost", label: "Cost", type: "number", required: true },
+    ],
+    [countryOptions, citiesOptions, fetching, selectedCountryId]
+  );
+
+  // 🔹 submit
   const handleSubmit = async (formData) => {
     try {
       await putData(formData);
-      toast.success("Zone updated successfully!");
+      toast.success("Zone updated successfully 🎉");
       navigate("/zone");
     } catch (err) {
-      const errorMessage =
+      const msg =
         err.response?.data?.error?.message ||
         err.response?.data?.message ||
         "Failed to update zone";
 
-      const errorDetails = err.response?.data?.error?.details;
-
-      if (errorDetails && Array.isArray(errorDetails)) {
-        errorDetails.forEach((detail) => toast.error(detail));
-      } else {
-        toast.error(errorMessage);
-      }
-
-      console.error("❌ Error:", err.response?.data);
+      toast.error(msg);
+      console.error(err.response?.data);
     }
   };
-
-  const handleCancel = () => navigate("/zone");
 
   if (fetching) return <Loader />;
 
@@ -97,12 +135,12 @@ export default function ZoneEdit() {
     <div className="p-6 bg-gray-100 min-h-screen">
       {zoneData && (
         <AddPage
-          title={`Edit Zone: ${zoneData.name || "..."}`}
+          title={`Edit Zone: ${zoneData.name}`}
           description="Update zone details"
           fields={fields}
           initialData={zoneData}
           onSubmit={handleSubmit}
-          onCancel={handleCancel}
+          onCancel={() => navigate("/zone")}
           loading={updating}
         />
       )}

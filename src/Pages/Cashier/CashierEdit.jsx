@@ -1,55 +1,73 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
+import AddPage from "@/components/AddPage";
+import Loader from "@/components/Loader";
 import usePut from "@/hooks/usePut";
+import useGet from "@/hooks/useGet";
 import api from "@/api/api";
 import { toast } from "react-toastify";
-import Loader from "@/components/Loader";
-import AddPage from "@/components/AddPage";
 
 export default function CashierEdit() {
   const { id } = useParams();
   const navigate = useNavigate();
 
   const { putData, loading: updating } = usePut(`/api/admin/cashier/${id}`);
+  const { data: selectData, loading: loadingSelect } = useGet(
+    "/api/admin/cashier/select"
+  );
 
   const [cashierData, setCashierData] = useState(null);
-  const [allWarehouses, setAllWarehouses] = useState([]);
   const [fetching, setFetching] = useState(true);
 
-  // تحديث الـ fields ديناميكياً
-  const fields = useMemo(() => [
-    { key: "name", label: "Name", required: true },
-    { key: "ar_name", label: "Arabic Name", required: true },
-    {
-      key: "warehouse_id",
-      label: "Warehouse",
-      type: "select",
-      required: true,
-      options: allWarehouses.map((warehouse) => ({
-        value: warehouse._id,
-        label: warehouse.name,
-      })),
-    },
-    {
-      key: "status",
-      label: "Status",
-      type: "select",
-      required: true,
-      options: [
-        { value: true, label: "Active" },
-        { value: false, label: "Inactive" },
-      ],
-    },
-  ], [allWarehouses]);
+  const warehouses = selectData?.warehouse || [];
+  const bankAccounts = selectData?.bankAccounts || [];
+
+  const warehouseOptions = useMemo(
+    () => warehouses.map((w) => ({ value: w._id, label: w.name })),
+    [warehouses]
+  );
+
+  const bankAccountOptions = useMemo(
+    () => bankAccounts.map((b) => ({ value: b._id, label: `${b.name} (${b.balance})` })),
+    [bankAccounts]
+  );
+
+  const fields = useMemo(
+    () => [
+      { key: "name", label: "Name", required: true },
+      { key: "ar_name", label: "Arabic Name", required: true },
+      {
+        key: "warehouse_id",
+        label: "Warehouse",
+        type: "select",
+        required: true,
+        options: warehouseOptions,
+        disabled: loadingSelect,
+      },
+      {
+        key: "bankAccounts",
+        label: "Bank Accounts",
+        type: "multiselect",
+        required: false,
+        options: bankAccountOptions,
+        disabled: loadingSelect,
+      },
+      {
+        key: "status",
+        label: "Status",
+        type: "switch",
+        required: true,
+      },
+    ],
+    [warehouseOptions, bankAccountOptions, loadingSelect]
+  );
 
   useEffect(() => {
     const fetchCashier = async () => {
       try {
         setFetching(true);
-
         const res = await api.get(`/api/admin/cashier/${id}`);
         const cashier = res.data?.data?.cashier;
-        const warehousesList = res.data?.data?.warehouses || [];
 
         if (!cashier) {
           toast.error("Cashier not found.");
@@ -57,20 +75,16 @@ export default function CashierEdit() {
           return;
         }
 
-        setAllWarehouses(warehousesList);
-
-        const initialData = {
+        setCashierData({
           name: cashier.name || "",
           ar_name: cashier.ar_name || "",
           warehouse_id: cashier.warehouse_id?._id || "",
+          bankAccounts: cashier.bankAccounts?.map((b) => b._id) || [],
           status: cashier.status ?? true,
-        };
-
-        setCashierData(initialData);
-
+        });
       } catch (err) {
         toast.error("Failed to fetch cashier data");
-        console.error("❌ Error fetching cashier:", err);
+        console.error("❌ Error:", err);
       } finally {
         setFetching(false);
       }
@@ -81,24 +95,21 @@ export default function CashierEdit() {
 
   const handleSubmit = async (formData) => {
     try {
-      // تحويل status إلى boolean إذا جاء كـ string
-      const dataToSend = {
+      const payload = {
         ...formData,
-        status: formData.status === "true" || formData.status === true,
+        status: formData.status === true || formData.status === "true",
+        bankAccounts: Array.isArray(formData.bankAccounts) ? formData.bankAccounts : [],
       };
 
-      await putData(dataToSend);
+      await putData(payload);
       toast.success("Cashier updated successfully!");
       navigate("/cashier");
     } catch (err) {
       const errorMessage =
-        err.response?.data?.error?.message ||
-        err.response?.data?.message ||
-        "Failed to update cashier";
-
+        err.response?.data?.error?.message || err.response?.data?.message || "Failed to update cashier";
       const errorDetails = err.response?.data?.error?.details;
 
-      if (errorDetails && Array.isArray(errorDetails)) {
+      if (Array.isArray(errorDetails)) {
         errorDetails.forEach((detail) => toast.error(detail));
       } else {
         toast.error(errorMessage);
@@ -108,9 +119,7 @@ export default function CashierEdit() {
     }
   };
 
-  const handleCancel = () => navigate("/cashier");
-
-  if (fetching) return <Loader />;
+  if (fetching || loadingSelect) return <Loader />;
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
@@ -121,7 +130,7 @@ export default function CashierEdit() {
           fields={fields}
           initialData={cashierData}
           onSubmit={handleSubmit}
-          onCancel={handleCancel}
+          onCancel={() => navigate("/cashier")}
           loading={updating}
         />
       )}

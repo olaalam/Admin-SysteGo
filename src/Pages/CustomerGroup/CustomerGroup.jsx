@@ -5,31 +5,53 @@ import Loader from "@/components/Loader";
 import DeleteDialog from "@/components/DeleteForm";
 import useGet from "@/hooks/useGet";
 import useDelete from "@/hooks/useDelete";
+import api from "@/api/api";
+import { toast } from "react-toastify";
+import { Switch } from "@/components/ui/switch"; // لو عندك مكون Switch جاهز
 
 const CustomerGroup = () => {
     const navigate = useNavigate();
 
     const { data, loading, error, refetch } = useGet(
-        "/api/admin/customer/groups"
+        "/api/admin/customer/group"
     );
 
     const { deleteData, loading: deleting } = useDelete(
-        "/api/admin/customer/groups/delete"
+        "/api/admin/customer/group/delete"
     );
 
+    const [updatingStatus, setUpdatingStatus] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState(null);
 
-    // ✅ حسب الريسبونس
     const groups = data?.groups || [];
 
     const handleDelete = async (item) => {
         try {
-            await deleteData(`/api/admin/customer/groups/${item._id}`);
+            await deleteData(`/api/admin/customer/group/${item._id}`);
             refetch();
         } finally {
             setDeleteTarget(null);
         }
     };
+
+    // 🔹 تعديل الحالة
+const handleStatusChange = async (group) => {
+    if (!group?._id) return; // حماية إضافية
+    try {
+        setUpdatingStatus(true);
+        await api.put(`/api/admin/customer/group/${group._id}`, {
+            status: !group.status,
+        });
+        toast.success("Status updated successfully");
+        refetch();
+    } catch (err) {
+        toast.error("Failed to update status");
+        console.error(err);
+    } finally {
+        setUpdatingStatus(false);
+    }
+};
+
 
     const columns = [
         {
@@ -37,23 +59,19 @@ const CustomerGroup = () => {
             header: "Group Name",
             filterable: true,
         },
-        {
-            key: "status",
-            header: "Status",
-            filterable: true,
-            render: (value) =>
-                value ? (
-                    <span className="text-green-600 font-semibold">Active</span>
-                ) : (
-                    <span className="text-red-600 font-semibold">Inactive</span>
-                ),
-        },
-        {
-            key: "createdAt",
-            header: "Created At",
-            render: (value) =>
-                new Date(value).toLocaleDateString("en-GB"),
-        },
+{
+    key: "status",
+    header: "Status",
+    filterable: true,
+    render: (value, group) => (
+        <Switch
+            checked={group.status}
+            onCheckedChange={() => handleStatusChange(group)}
+            disabled={updatingStatus}
+        />
+    ),
+}
+
     ];
 
     if (loading) return <Loader />;
@@ -72,10 +90,8 @@ const CustomerGroup = () => {
                 columns={columns}
                 title="Customer Groups"
                 addButtonText="Add Group"
-                onAdd={() => alert("Add new supplier clicked!")}
-                onEdit={(item) => alert(`Edit supplier: ${item.username}`)}
-                addPath="add"
-                editPath={(item) => `edit/${item._id}`}
+                onAdd={() => navigate("add")}
+                onEdit={(item) => navigate(`edit/${item._id}`)}
                 onDelete={(item) => setDeleteTarget(item)}
                 itemsPerPage={10}
                 searchable

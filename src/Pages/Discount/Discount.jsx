@@ -110,13 +110,7 @@ const Discount = () => {
         <span className="font-medium text-gray-900 text-sm">{value}</span>
       ),
     },
-          {
-        key: "description",
-        label: "Description",
-        type: "textarea",
-        required: false,
-        placeholder: "Optional description",
-      },
+ 
     {
       key: "type",
       header: "Type",

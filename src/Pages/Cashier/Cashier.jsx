@@ -14,8 +14,6 @@ const Cashier = () => {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [showBankAccountsModal, setShowBankAccountsModal] = useState(false);
   const [selectedBankAccounts, setSelectedBankAccounts] = useState([]);
-  const [showUsersModal, setShowUsersModal] = useState(false);
-  const [selectedUsers, setSelectedUsers] = useState([]);
   const cashiers = data?.cashiers || [];
 
   const handleDelete = async (item) => {
@@ -41,31 +39,7 @@ const Cashier = () => {
     );
   };
 
-  const renderUsers = (users) => {
-    if (!users || users.length === 0) {
-      return <span className="text-gray-400">No Users</span>;
-    }
-    return (
-      <div className="flex flex-col gap-1">
-        {users.slice(0, 2).map((user, idx) => (
-          <span key={idx} className="text-sm">
-            {user.username}
-          </span>
-        ))}
-        {users.length > 2 && (
-          <button
-            onClick={() => {
-              setSelectedUsers(users);
-              setShowUsersModal(true);
-            }}
-            className="text-xs text-teal-600 hover:text-teal-800 hover:underline text-left"
-          >
-            +{users.length - 2} more
-          </button>
-        )}
-      </div>
-    );
-  };
+
 
   const renderBankAccounts = (accounts) => {
     if (!accounts || accounts.length === 0) {
@@ -113,12 +87,6 @@ const Cashier = () => {
       header: "Cashier Active",
       filterable: true,
       render: renderStatus,
-    },
-    {
-      key: "users",
-      header: "Users",
-      filterable: false,
-      render: renderUsers,
     },
     {
       key: "bankAccounts",
@@ -273,113 +241,7 @@ const Cashier = () => {
         </div>
       )}
 
-      {/* Users Modal */}
-      {showUsersModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[80vh] overflow-hidden">
-            {/* Header */}
-            <div className="bg-gradient-to-r from-teal-600 to-teal-700 px-6 py-4">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-white">
-                    Users
-                  </h3>
-                  <p className="text-teal-100 text-sm mt-1">
-                    Total: {selectedUsers.length} {selectedUsers.length === 1 ? 'User' : 'Users'}
-                  </p>
-                </div>
-                <button
-                  onClick={() => setShowUsersModal(false)}
-                  className="text-white/80 hover:text-white transition-colors"
-                >
-                  <svg
-                    className="h-5 w-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </div>
 
-            {/* Content */}
-            <div className="p-6 overflow-y-auto max-h-[calc(80vh-140px)]">
-              <div className="space-y-3">
-                {selectedUsers.map((user, idx) => (
-                  <div
-                    key={idx}
-                    className="p-4 bg-gray-50 rounded-lg border border-gray-200 hover:border-teal-300 hover:bg-teal-50/50 transition-all"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">
-                          {user.username}
-                        </p>
-
-                        <div className="mt-2 space-y-1">
-                          <p className="text-xs text-gray-600">
-                            <span className="font-medium">Email:</span>{" "}
-                            <span className="text-gray-800">{user.email}</span>
-                          </p>
-
-                          <p className="text-xs text-gray-600">
-                            <span className="font-medium">Role:</span>{" "}
-                            <span className="px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800 capitalize">
-                              {user.role}
-                            </span>
-                          </p>
-
-                          <p className="text-xs text-gray-600">
-                            <span className="font-medium">Status:</span>{" "}
-                            <span
-                              className={`px-2 py-0.5 rounded text-xs font-medium ${
-                                user.status === "active"
-                                  ? "bg-green-100 text-green-800"
-                                  : "bg-red-100 text-red-800"
-                              }`}
-                            >
-                              {user.status}
-                            </span>
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="text-right">
-                        <div
-                          className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${
-                            user.status === "active"
-                              ? "bg-green-500"
-                              : "bg-gray-400"
-                          }`}
-                        >
-                          {user.username.charAt(0).toUpperCase()}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
-              <button
-                onClick={() => setShowUsersModal(false)}
-                className="w-full px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-medium"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

@@ -1,97 +1,108 @@
 // src/pages/CashierAdd.jsx
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import AddPage from "@/components/AddPage";
-import api from "@/api/api";
 import { toast } from "react-toastify";
 import Loader from "@/components/Loader";
 import usePost from "@/hooks/usePost";
+import useGet from "@/hooks/useGet";
 
 const CashierAdd = () => {
   const navigate = useNavigate();
 
-  const [allWarehouses, setAllWarehouses] = useState([]);
-  const [fetchingLists, setFetchingLists] = useState(true);
+  // ✅ جلب البنك و المخازن
+  const { data, loading } = useGet("/api/admin/cashier/select");
+  const bankAccounts = data?.bankAccounts || [];
+  const warehouses = data?.warehouse || [];
 
-  // استخدام usePost للإضافة
+  // ✅ إضافة كاشير
   const { postData, loading: submitting } = usePost("/api/admin/cashier/");
 
-  // الحقول
+  // ✅ خيارات المخازن
+  const warehouseOptions = useMemo(
+    () =>
+      warehouses.map((w) => ({
+        value: w._id,
+        label: w.name,
+      })),
+    [warehouses]
+  );
+
+  // ✅ خيارات الحسابات البنكية
+  const bankAccountOptions = useMemo(
+    () =>
+      bankAccounts.map((b) => ({
+        value: b._id,
+        label: `${b.name} (${b.balance})`,
+      })),
+    [bankAccounts]
+  );
+
+  // ✅ الحقول
   const fields = useMemo(
     () => [
       { key: "name", label: "Name", required: true },
       { key: "ar_name", label: "Arabic Name", required: true },
+
       {
         key: "warehouse_id",
         label: "Warehouse",
         type: "select",
         required: true,
-        options: allWarehouses.map((warehouse) => ({
-          value: warehouse._id,
-          label: warehouse.name,
-        })),
-        disabled: fetchingLists,
-        placeholder: fetchingLists ? "Loading warehouses..." : "Select warehouse",
+        options: warehouseOptions,
+        disabled: loading,
+        placeholder: loading ? "Loading warehouses..." : "Select warehouse",
       },
+
+      {
+        key: "balance",
+        label: "Initial Balance",
+        type: "number",
+        required: true,
+        min: 0,
+        placeholder: "e.g. 90000",
+      },
+
+      {
+        key: "bankAccounts",
+        label: "Bank Accounts",
+        type: "multiselect",
+        required: false,
+        options: bankAccountOptions,
+        disabled: loading,
+        placeholder: loading ? "Loading bank accounts..." : "Select bank accounts",
+      },
+
       {
         key: "status",
         label: "Status",
         type: "switch",
         required: true,
-
       },
     ],
-    [allWarehouses, fetchingLists]
+    [warehouseOptions, bankAccountOptions, loading]
   );
 
-  // جلب المخازن عند التحميل
-  useEffect(() => {
-    const fetchWarehouses = async () => {
-      setFetchingLists(true);
-      try {
-        // استدعاء API لجلب المخازن
-        const res = await api.get("/api/admin/warehouse"); // أو الـ endpoint المناسب
-        const warehousesList = res.data?.data?.warehouses || [];
-
-        if (!Array.isArray(warehousesList)) {
-          throw new Error("Invalid warehouses data");
-        }
-
-        setAllWarehouses(warehousesList);
-      } catch (err) {
-        toast.error("Failed to load warehouses");
-        console.error("❌ Error loading warehouses:", err);
-      } finally {
-        setFetchingLists(false);
-      }
-    };
-
-    fetchWarehouses();
-  }, []);
-
-  // إرسال البيانات
+  // ✅ إرسال البيانات
   const handleSubmit = async (formData) => {
     try {
-      // تحويل status إلى boolean إذا جاء كـ string
-      const dataToSend = {
-        name: formData.name,
-        ar_name: formData.ar_name,
-        warehouse_id: formData.warehouse_id,
-        status: formData.status === "true" || formData.status === true,
+      const payload = {
+        ...formData,
+        status: Boolean(formData.status),
+        bankAccounts: Array.isArray(formData.bankAccounts) ? formData.bankAccounts : [],
+        balance: String(formData.balance),
       };
 
-      await postData(dataToSend);
+      await postData(payload);
+
       toast.success("Cashier added successfully! 🎉");
       navigate("/cashier");
     } catch (err) {
       const errorMessage =
-        err.response?.data?.error?.message ||
-        err.response?.data?.message ||
-        "Failed to add cashier";
-
+        err.response?.data?.error?.message || err.response?.data?.message || "Failed to add cashier";
       const errorDetails = err.response?.data?.error?.details;
 
-      if (errorDetails && Array.isArray(errorDetails)) {
+      if (Array.isArray(errorDetails)) {
         errorDetails.forEach((detail) => toast.error(detail));
       } else {
         toast.error(errorMessage);
@@ -101,8 +112,7 @@ const CashierAdd = () => {
     }
   };
 
-  // عرض Loader أثناء جلب المخازن
-  if (fetchingLists) return <Loader />;
+  if (loading) return <Loader />;
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
@@ -117,7 +127,9 @@ const CashierAdd = () => {
           name: "",
           ar_name: "",
           warehouse_id: "",
-          status: true, // القيمة الافتراضية
+          balance: "",
+          bankAccounts: [],
+          status: true,
         }}
       />
     </div>

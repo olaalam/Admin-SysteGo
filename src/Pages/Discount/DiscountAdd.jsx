@@ -18,13 +18,7 @@ const DiscountAdd = () => {
         required: true,
         placeholder: "e.g. Summer Sale",
       },
-      {
-        key: "description",
-        label: "Description",
-        type: "textarea",
-        required: false,
-        placeholder: "Optional description",
-      },
+
       {
         key: "type",
         label: "Discount Type",
@@ -55,7 +49,6 @@ const DiscountAdd = () => {
     try {
       const payload = {
         name: formData.name,
-        description: formData.description,
         type: formData.type,
         amount:
           formData.type === "percentage"

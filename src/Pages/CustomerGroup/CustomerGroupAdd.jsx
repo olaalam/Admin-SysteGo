@@ -10,7 +10,7 @@ const CustomerGroupAdd = () => {
 
   // ✅ endpoint الإضافة
   const { postData, loading: submitting } = usePost(
-    "/api/admin/customer-group"
+    "/api/admin/customer/group"
   );
 
   // ✅ الحقول الخاصة بالـ customer group

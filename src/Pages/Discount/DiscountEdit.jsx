@@ -30,13 +30,7 @@ export default function DiscountEdit() {
         required: true,
         placeholder: "e.g. Summer Sale",
       },
-      {
-        key: "description",
-        label: "Description",
-        type: "textarea",
-        required: false,
-        placeholder: "Optional description",
-      },
+
       {
         key: "type",
         label: "Discount Type",
@@ -81,7 +75,6 @@ export default function DiscountEdit() {
 
         setDiscountData({
           name: discount.name || "",
-          description: discount.description || "",
           type: discount.type || "percentage",
           amount:
             discount.type === "percentage"
@@ -107,7 +100,6 @@ export default function DiscountEdit() {
     try {
       const payload = {
         name: formData.name,
-        description: formData.description,
         type: formData.type,
         amount:
           formData.type === "percentage"
