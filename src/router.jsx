@@ -84,6 +84,9 @@ import CurrencyEdit from "./Pages/Currency/CurrencyEdit";
 import Zone from "./Pages/Zone/Zone";
 import ZoneAdd from "./Pages/Zone/ZoneAdd";
 import ZoneEdit from "./Pages/Zone/ZoneEdit";
+import Point from "./Pages/Point/point";
+import PointAdd from "./Pages/Point/pointAdd";
+import PointEdit from "./Pages/Point/pointEdit";
 export default function AppRoutes() {
   return (
     <Routes>
@@ -794,7 +797,7 @@ export default function AppRoutes() {
           }
         />
       </Route>
-            {/* ✅ Zone (Nested Routes محمية) */}
+      {/* ✅ Zone (Nested Routes محمية) */}
       <Route path="zone">
         <Route
           index
@@ -817,6 +820,33 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute>
               <ZoneEdit />
+            </ProtectedRoute>
+          }
+        />
+      </Route>
+      {/* ✅ point (Nested Routes محمية) */}
+      <Route path="point">
+        <Route
+          index
+          element={
+            <ProtectedRoute>
+              <Point />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="add"
+          element={
+            <ProtectedRoute>
+              <PointAdd />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="edit/:id"
+          element={
+            <ProtectedRoute>
+              <PointEdit />
             </ProtectedRoute>
           }
         />

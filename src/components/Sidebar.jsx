@@ -121,6 +121,7 @@ const menuItems = [
     children: [
       { name: "List", path: "/reports/list" },
       { name: "Popup", path: "/popup" },
+      { name: "Point", path: "/point" },
     ],
   },
   { name: "Addons", icon: Puzzle, path: "/addons" },
