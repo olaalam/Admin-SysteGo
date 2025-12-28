@@ -87,6 +87,9 @@ import ZoneEdit from "./Pages/Zone/ZoneEdit";
 import Point from "./Pages/Point/point";
 import PointAdd from "./Pages/Point/pointAdd";
 import PointEdit from "./Pages/Point/pointEdit";
+import RedeemPoint from "./Pages/RedeemPoint/RedeemPoint";
+import RedeemPointAdd from "./Pages/RedeemPoint/RedeemPointAdd";
+import RedeemPointEdit from "./Pages/RedeemPoint/RedeemPointEdit";
 export default function AppRoutes() {
   return (
     <Routes>
@@ -847,6 +850,33 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute>
               <PointEdit />
+            </ProtectedRoute>
+          }
+        />
+      </Route>
+            {/* ✅ RedeemPoint (Nested Routes محمية) */}
+      <Route path="redeem-point">
+        <Route
+          index
+          element={
+            <ProtectedRoute>
+              <RedeemPoint />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="add"
+          element={
+            <ProtectedRoute>
+              <RedeemPointAdd />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="edit/:id"
+          element={
+            <ProtectedRoute>
+              <RedeemPointEdit />
             </ProtectedRoute>
           }
         />

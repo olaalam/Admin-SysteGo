@@ -122,6 +122,7 @@ const menuItems = [
       { name: "List", path: "/reports/list" },
       { name: "Popup", path: "/popup" },
       { name: "Point", path: "/point" },
+      { name: "RedeemPoint", path: "/redeem-point" },
     ],
   },
   { name: "Addons", icon: Puzzle, path: "/addons" },
