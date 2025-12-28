@@ -4,17 +4,21 @@ import Loader from "@/components/Loader";
 import DeleteDialog from "@/components/DeleteForm";
 import useGet from "@/hooks/useGet";
 import useDelete from "@/hooks/useDelete";
+import { toast } from "react-toastify";
+import api from "@/api/api";
+import { Switch } from "@/components/ui/switch"; // تأكد من مسار الـ Switch الصحيح في مشروعك
 
 const Cashier = () => {
   const { data, loading, error, refetch } = useGet("/api/admin/cashier");
-  const { deleteData, loading: deleting } = useDelete(
-    "/api/admin/cashier/delete"
-  );
+  const { deleteData, loading: deleting } = useDelete("/api/admin/cashier/delete");
 
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [showBankAccountsModal, setShowBankAccountsModal] = useState(false);
   const [selectedBankAccounts, setSelectedBankAccounts] = useState([]);
+  
   const cashiers = data?.cashiers || [];
+
+  // --- Functions ---
 
   const handleDelete = async (item) => {
     try {
@@ -25,21 +29,52 @@ const Cashier = () => {
     }
   };
 
-  const renderStatus = (status) => {
+  const renderStatus = (status) => (
+    <span
+      className={`px-2 py-1 rounded text-xs font-medium ${
+        status ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+      }`}
+    >
+      {status ? "Active" : "Inactive"}
+    </span>
+  );
+
+  // مكون فرعي للـ Switch لضمان استقلالية الـ State لكل صف
+  const RenderStatusSwitch = ({ initialStatus, row }) => {
+    const [checked, setChecked] = useState(initialStatus);
+    const [isUpdating, setIsUpdating] = useState(false);
+
+    const toggleStatus = async () => {
+      if (isUpdating) return;
+      setIsUpdating(true);
+      const previousStatus = checked;
+      const newStatus = !checked;
+
+      try {
+        setChecked(newStatus);
+        await api.put(`/api/admin/cashier/${row._id}`, {
+          status: newStatus,
+        });
+        toast.success(`Status updated for ${row.name}`);
+        refetch(); // لتحديث البيانات في الجدول بالكامل إذا لزم الأمر
+      } catch (err) {
+        setChecked(previousStatus);
+        toast.error("Failed to update status",err);
+      } finally {
+        setIsUpdating(false);
+      }
+    };
+
     return (
-      <span
-        className={`px-2 py-1 rounded text-xs font-medium ${
-          status
-            ? "bg-green-100 text-green-800"
-            : "bg-red-100 text-red-800"
-        }`}
-      >
-        {status ? "Active" : "Inactive"}
-      </span>
+      <div className="flex items-center justify-center">
+        <Switch 
+          checked={checked} 
+          onCheckedChange={toggleStatus} 
+          disabled={isUpdating}
+        />
+      </div>
     );
   };
-
-
 
   const renderBankAccounts = (accounts) => {
     if (!accounts || accounts.length === 0) {
@@ -48,8 +83,8 @@ const Cashier = () => {
     return (
       <div className="flex flex-col gap-1">
         {accounts.slice(0, 2).map((account, idx) => (
-          <span key={idx} className="text-sm">
-            {account.name}
+          <span key={idx} className="text-sm font-medium text-gray-700">
+            • {account.name}
           </span>
         ))}
         {accounts.length > 2 && (
@@ -58,14 +93,16 @@ const Cashier = () => {
               setSelectedBankAccounts(accounts);
               setShowBankAccountsModal(true);
             }}
-            className="text-xs text-teal-600 hover:text-teal-800 hover:underline text-left"
+            className="text-xs text-teal-600 font-bold hover:underline text-left mt-1"
           >
-            +{accounts.length - 2} more
+            +{accounts.length - 2} more accounts
           </button>
         )}
       </div>
     );
   };
+
+  // --- Table Columns Configuration ---
 
   const columns = [
     { key: "name", header: "Name", filterable: true },
@@ -79,28 +116,22 @@ const Cashier = () => {
     {
       key: "status",
       header: "Status",
-      filterable: true,
-      render: renderStatus,
+      render: (status, row) => <RenderStatusSwitch initialStatus={status} row={row} />,
     },
     {
       key: "cashier_active",
       header: "Cashier Active",
-      filterable: true,
       render: renderStatus,
     },
     {
       key: "bankAccounts",
       header: "Bank Accounts",
-      filterable: false,
       render: renderBankAccounts,
     },
   ];
 
   if (loading) return <Loader />;
-  if (error)
-    return (
-      <div className="p-6 text-red-600 m-auto text-center">{error}</div>
-    );
+  if (error) return <div className="p-6 text-red-600 text-center">{error}</div>;
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
@@ -108,23 +139,19 @@ const Cashier = () => {
         data={cashiers}
         columns={columns}
         title="Cashier Management"
-        onAdd={() => alert("Add new cashier clicked!")}
-        onEdit={(item) => alert(`Edit cashier: ${item.name}`)}
-        onDelete={(item) => setDeleteTarget(item)}
         addButtonText="Add Cashier"
         addPath="add"
         editPath={(item) => `edit/${item._id}`}
-        itemsPerPage={10}
+        onDelete={(item) => setDeleteTarget(item)}
         searchable={true}
         filterable={true}
       />
 
+      {/* Delete Confirmation Dialog */}
       {deleteTarget && (
         <DeleteDialog
           title="Delete Cashier"
-          message={`Are you sure you want to delete cashier "${
-            deleteTarget.name || deleteTarget.ar_name
-          }"?`}
+          message={`Are you sure you want to delete "${deleteTarget.name || deleteTarget.ar_name}"?`}
           onConfirm={() => handleDelete(deleteTarget)}
           onCancel={() => setDeleteTarget(null)}
           loading={deleting}
@@ -133,106 +160,46 @@ const Cashier = () => {
 
       {/* Bank Accounts Modal */}
       {showBankAccountsModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[80vh] overflow-hidden">
-            {/* Header */}
-            <div className="bg-gradient-to-r from-teal-600 to-teal-700 px-6 py-4">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-white">
-                    Bank Accounts
-                  </h3>
-                  <p className="text-teal-100 text-sm mt-1">
-                    Total: {selectedBankAccounts.length} {selectedBankAccounts.length === 1 ? 'Account' : 'Accounts'}
-                  </p>
-                </div>
-                <button
-                  onClick={() => setShowBankAccountsModal(false)}
-                  className="text-white/80 hover:text-white transition-colors"
-                >
-                  <svg
-                    className="h-5 w-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full max-h-[85vh] flex flex-col overflow-hidden">
+            {/* Modal Header */}
+            <div className="bg-teal-600 px-6 py-4 flex justify-between items-center">
+              <div>
+                <h3 className="text-lg font-bold text-white">Bank Accounts</h3>
+                <p className="text-teal-100 text-xs">Total linked accounts: {selectedBankAccounts.length}</p>
               </div>
+              <button onClick={() => setShowBankAccountsModal(false)} className="text-white hover:rotate-90 transition-transform">
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
 
-            {/* Content */}
-            <div className="p-6 overflow-y-auto max-h-[calc(80vh-140px)]">
-              <div className="space-y-3">
-                {selectedBankAccounts.map((account, idx) => (
-                  <div
-                    key={idx}
-                    className="p-4 bg-gray-50 rounded-lg border border-gray-200 hover:border-teal-300 hover:bg-teal-50/50 transition-all"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">
-                          {account.name}
-                        </p>
-
-                        <div className="mt-2 space-y-1">
-                          <p className="text-xs text-gray-600">
-                            <span className="font-medium">Balance:</span>{" "}
-                            <span className="font-bold text-teal-600">
-                              ${account.balance.toFixed(2)}
-                            </span>
-                          </p>
-
-                          <p className="text-xs text-gray-600">
-                            <span className="font-medium">Status:</span>{" "}
-                            <span
-                              className={`px-2 py-0.5 rounded text-xs font-medium ${
-                                account.status
-                                  ? "bg-green-100 text-green-800"
-                                  : "bg-red-100 text-red-800"
-                              }`}
-                            >
-                              {account.status ? "Active" : "Inactive"}
-                            </span>
-                          </p>
-
-                          <p className="text-xs text-gray-600">
-                            <span className="font-medium">In POS:</span>{" "}
-                            <span
-                              className={`px-2 py-0.5 rounded text-xs font-medium ${
-                                account.in_POS
-                                  ? "bg-teal-100 text-teal-800"
-                                  : "bg-gray-100 text-gray-800"
-                              }`}
-                            >
-                              {account.in_POS ? "Yes" : "No"}
-                            </span>
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="text-right">
-                        <p className="text-lg font-bold text-teal-600">
-                          ${account.balance.toFixed(2)}
-                        </p>
-                      </div>
+            {/* Modal Content */}
+            <div className="p-6 overflow-y-auto space-y-3">
+              {selectedBankAccounts.map((account, idx) => (
+                <div key={idx} className="p-4 bg-gray-50 rounded-lg border border-gray-200 flex justify-between items-center">
+                  <div>
+                    <p className="font-bold text-gray-800">{account.name}</p>
+                    <div className="flex gap-2 mt-1">
+                       <span className={`text-[10px] px-2 py-0.5 rounded-full ${account.status ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                         {account.status ? "Active" : "Inactive"}
+                       </span>
+                       {account.in_POS && <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">POS</span>}
                     </div>
                   </div>
-                ))}
-              </div>
+                  <div className="text-right">
+                    <p className="text-teal-600 font-bold text-lg">${account.balance?.toFixed(2)}</p>
+                  </div>
+                </div>
+              ))}
             </div>
 
-            {/* Footer */}
-            <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
+            {/* Modal Footer */}
+            <div className="p-4 bg-gray-50 border-t">
               <button
                 onClick={() => setShowBankAccountsModal(false)}
-                className="w-full px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-medium"
+                className="w-full py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold transition-colors"
               >
                 Close
               </button>
@@ -240,8 +207,6 @@ const Cashier = () => {
           </div>
         </div>
       )}
-
-
     </div>
   );
 };
