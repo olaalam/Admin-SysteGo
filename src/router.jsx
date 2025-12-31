@@ -85,7 +85,7 @@ import Zone from "./Pages/Zone/Zone";
 import ZoneAdd from "./Pages/Zone/ZoneAdd";
 import ZoneEdit from "./Pages/Zone/ZoneEdit";
 import Point from "./Pages/Point/Point";
-import PointAdd from "./Pages/Point/PointAdd";its
+import PointAdd from "./Pages/Point/PointAdd";
 import PointEdit from "./Pages/Point/PointEdit";
 import RedeemPoint from "./Pages/RedeemPoint/RedeemPoint";
 import RedeemPointAdd from "./Pages/RedeemPoint/RedeemPointAdd";
