@@ -84,9 +84,9 @@ import CurrencyEdit from "./Pages/Currency/CurrencyEdit";
 import Zone from "./Pages/Zone/Zone";
 import ZoneAdd from "./Pages/Zone/ZoneAdd";
 import ZoneEdit from "./Pages/Zone/ZoneEdit";
-import Point from "./Pages/Point/point";
-import PointAdd from "./Pages/Point/pointAdd";
-import PointEdit from "./Pages/Point/pointEdit";
+import Point from "./Pages/Point/Point";
+import PointAdd from "./Pages/Point/PointAdd";its
+import PointEdit from "./Pages/Point/PointEdit";
 import RedeemPoint from "./Pages/RedeemPoint/RedeemPoint";
 import RedeemPointAdd from "./Pages/RedeemPoint/RedeemPointAdd";
 import RedeemPointEdit from "./Pages/RedeemPoint/RedeemPointEdit";
